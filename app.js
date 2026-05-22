@@ -27,6 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const containerLow = document.getElementById("container-low");
     const containerDefective = document.getElementById("container-defective");
     
+    // Tablo başlıklarını admin/müşteri durumuna göre eksiksiz hazırlar
+    updateTableHeadersDirect(isAdmin);
+
     if (isAdmin) {
         if (containerLow) containerLow.style.display = "block";
         if (containerDefective) containerDefective.style.display = "block";
@@ -41,6 +44,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fetchStocksFromCloud(isAdmin);
 });
+
+// Adminde sütunların uçmasını engelleyen dinamik başlık fonksiyonu
+function updateTableHeadersDirect(isAdmin) {
+    ["table-healthy", "table-low", "table-defective"].forEach(tableId => {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        const theadRow = table.querySelector("thead tr");
+        if (!theadRow) return;
+
+        let headersHTML = `
+            <th>Barkod</th>
+            <th>Marka</th>
+            <th>Model</th>
+            <th>Boyut</th>
+            <th>Mevcut Stok</th>
+            <th style="color: #10b981;">Alıcı Teklifi</th>
+            <th style="color: #f97316;">Satıcı Teklifi</th>
+        `;
+
+        if (isAdmin) {
+            headersHTML += `
+                <th class="admin-only" style="display: table-cell;">Alış Fiyatı</th>
+                <th class="admin-only" style="display: table-cell;">Satış Fiyatı</th>
+                <th class="admin-only" style="display: table-cell;">Toplam Alış</th>
+                <th class="admin-only" style="display: table-cell;">Toplam Satış</th>
+            `;
+        }
+
+        headersHTML += `<th>İşlemler</th>`;
+        theadRow.innerHTML = headersHTML;
+    });
+}
 
 // ==========================================
 // 3. BULUTTAN VERİLERİ GETİRME (GET)
@@ -148,7 +183,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             <td class="admin-only" style="display: table-cell;">${buyPrice.toFixed(2)} TL</td>
             <td class="admin-only" style="display: table-cell;">${sellPrice.toFixed(2)} TL</td>
             <td class="admin-only" style="display: table-cell; color: #3498db;">${totalBuyRow.toFixed(2)} TL</td>
-            <td class="admin-only" style="display: table-cell; color: #2ecc71;"><strong>${totalSellRow.toFixed(2)} TL</strong></td>
+            <td class="admin-only" style="display: table-cell; color: #10b981;"><strong>${totalSellRow.toFixed(2)} TL</strong></td>
         ` : "";
 
         row.innerHTML = `
@@ -157,8 +192,8 @@ function updateTablesByStatus(stocks, isAdmin) {
             <td>${model}</td>
             <td>${capacity} GB</td>
             <td><strong id="stock-count-${stock.id}">${count}</strong></td>
-            <td style="color: #2ecc71; font-weight: bold;">${parsedOffers.buyer}</td>
-            <td style="color: #e67e22; font-weight: bold;">${parsedOffers.seller}</td>
+            <td style="color: #10b981; font-weight: bold;">${buyerDisplay}</td>
+            <td style="color: #f97316; font-weight: bold;">${sellerDisplay}</td>
             ${adminCells}
             <td>${actionButtons}</td>
         `;
@@ -190,7 +225,7 @@ function addCategoryTotalRow(tbody, totals) {
     row.innerHTML = `
         <td colspan="7" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
         <td style="color: #3498db;">Alış: ${totals.buy.toFixed(2)} TL</td>
-        <td style="color: #2ecc71;">Satış: ${totals.sell.toFixed(2)} TL</td>
+        <td style="color: #10b981;">Satış: ${totals.sell.toFixed(2)} TL</td>
         <td></td>
     `;
     tbody.appendChild(row);
@@ -389,7 +424,6 @@ window.barcodeSaleStockDrop = async function(event) {
     
     if (!scannedBarcode) return;
 
-    // Buluttan çekilen mevcut listede bu barkoda ait ürünü ara
     const matchedStock = globalStocks.find(s => s.barcode && s.barcode.trim() === scannedBarcode);
 
     if (!matchedStock) {
@@ -408,7 +442,6 @@ window.barcodeSaleStockDrop = async function(event) {
         return;
     }
 
-    // Stoğu 1 düşür
     let newStockCount = currentStockCount - 1;
 
     try {
@@ -424,11 +457,8 @@ window.barcodeSaleStockDrop = async function(event) {
         });
 
         if (response.ok) {
-            // Başarılı satış bildirimi ve sesli uyarı etkisi için input temizleme
             barcodeInput.value = "";
             barcodeInput.focus();
-            
-            // Ekranı anlık güncelle
             fetchStocksFromCloud(true);
         } else {
             alert("Stok güncellenirken bir bulut hatası oluştu.");
