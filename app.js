@@ -9,12 +9,17 @@ let currentActiveReportTab = "Satış 1";
 let hasSelectedRole = false; 
 
 // ==========================================
-// 2. SAYFA YÜKLENDİĞİNDE YETKİ KONTROLÜ
+// 2. SAYFA YÜKLENDİĞİNDE YETKİ VE HAFIZA KONTROLÜ
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mod'); 
     const isAdmin = (mode === 'ahmet');
+
+    // Eğer admin ise hafızadaki tüm müşteri rollerini sıfırla ki admin her şeyi görebilsin
+    if (isAdmin) {
+        localStorage.removeItem("erdem_bilisim_locked_role");
+    }
 
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
@@ -31,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const roleSelector = document.getElementById("customer-role-selector");
     if (roleSelector) roleSelector.style.display = isAdmin ? "none" : "block";
 
-    // Admin panelinde kategoriler her zaman açık
     const containerLow = document.getElementById("container-low");
     const containerDefective = document.getElementById("container-defective");
     
@@ -46,8 +50,38 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         renderSalesReport();
     } else {
-        if (containerLow) containerLow.style.display = "none";
-        if (containerDefective) containerDefective.style.display = "none";
+        // 🔒 SAYFA YENİLENDİĞİNDE DEVREYE GİREN HAFIZA KİLİDİ
+        const savedRole = localStorage.getItem("erdem_bilisim_locked_role");
+        if (savedRole) {
+            hasSelectedRole = true;
+            // Radyo butonunu hafızadaki seçime göre işaretle
+            const radioToSelect = document.querySelector(`input[name="user-role-radio"][value="${savedRole}"]`);
+            if (radioToSelect) radioToSelect.checked = true;
+
+            // Tikleri anında kilitle (F5 atsa bile açılamaz)
+            const radios = document.querySelectorAll('input[name="user-role-radio"]');
+            radios.forEach(radio => radio.disabled = true);
+            if (roleSelector) {
+                roleSelector.style.opacity = "0.6";
+                roleSelector.style.pointerEvents = "none";
+            }
+
+            // Seçilen panele göre form ekranlarını ayarla
+            const sellerFormPanel = document.getElementById("customer-seller-panel");
+            if (savedRole === "satici") {
+                if (containerLow) containerLow.style.display = "block";
+                if (containerDefective) containerDefective.style.display = "block";
+                if (sellerFormPanel) sellerFormPanel.style.display = "block";
+            } else {
+                if (containerLow) containerLow.style.display = "none";
+                if (containerDefective) containerDefective.style.display = "none";
+                if (sellerFormPanel) sellerFormPanel.style.display = "none";
+            }
+        } else {
+            // Eğer daha önce hiç rol seçmediyse default olarak alt tablolar kapalı başlasın
+            if (containerLow) containerLow.style.display = "none";
+            if (containerDefective) containerDefective.style.display = "none";
+        }
     }
 
     fetchStocksFromCloud(isAdmin);
@@ -60,7 +94,6 @@ function updateTableHeadersDirect(isAdmin) {
         const theadRow = table.querySelector("thead tr");
         if (!theadRow) return;
 
-        // Model kalktı yerine İNÇ geldi
         let headersHTML = `
             <th>Barkod</th>
             <th>Marka</th>
@@ -79,7 +112,6 @@ function updateTableHeadersDirect(isAdmin) {
                 <th class="admin-only" style="display: table-cell;">Toplam Satış</th>
             `;
         } else {
-            // Müşteri ekranındaysa başlıklar dinamik körleme mantığına geçer
             headersHTML = `
                 <th>Barkod</th>
                 <th>Marka</th>
@@ -97,10 +129,15 @@ function updateTableHeadersDirect(isAdmin) {
     });
 }
 
-// ⚡ ÜSTTEKİ ROL SEÇİMİ YAPILDIĞINDA TETİKLENEN KİLİT MOTORU
+// ⚡ ÜSTTEKİ ROL SEÇİMİ YAPILDIĞINDA TARAYICIYA KAZINAN KİLİT MOTORU
 window.handleRoleChange = function() {
     if (hasSelectedRole) return;
     hasSelectedRole = true;
+
+    const currentRole = getSelectedCustomerRole();
+    
+    // 🔒 Seçilen rolü tarayıcı hafızasına alıyoruz (F5 koruması)
+    localStorage.setItem("erdem_bilisim_locked_role", currentRole);
 
     const radios = document.querySelectorAll('input[name="user-role-radio"]');
     radios.forEach(radio => radio.disabled = true);
@@ -110,10 +147,7 @@ window.handleRoleChange = function() {
         roleSelector.style.opacity = "0.6";
         roleSelector.style.pointerEvents = "none";
     }
-
-    const currentRole = getSelectedCustomerRole();
     
-    // Satıcı seçildiyse "Sağlığı Düşük" ve "Arızalı" tablolarını ve yeni mal ekleme formunu açıyoruz!
     const containerLow = document.getElementById("container-low");
     const containerDefective = document.getElementById("container-defective");
     const sellerFormPanel = document.getElementById("customer-seller-panel");
@@ -198,7 +232,7 @@ function updateTablesByStatus(stocks, isAdmin) {
         const currentStatus = (stock.status || "Sağlıklı").trim();
         const brand = stock.brand_name || "---";
         const capacity = stock.capacity_gb ? `${stock.capacity_gb} GB` : "---";
-        const inch = stock.model || "---"; // Veritabanındaki 'model' sütununu 'inch' verisi için saklıyoruz hafızada.
+        const inch = stock.model || "---"; 
         const barcode = stock.barcode || "---";
         
         const parsedOffers = parseOfferNotes(stock.offer_notes);
@@ -206,7 +240,6 @@ function updateTablesByStatus(stocks, isAdmin) {
         const buyPrice = parseFloat(stock.price || 0);
         const sellPrice = parseFloat(stock.sale_price || 0);
         
-        // Eğer giriş yapan admin değilse ve henüz satıcı rolünü seçmediyse, düşük/arızalı ürünleri başlangıçta gösterme
         if (!isAdmin && currentRole !== "satici" && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
@@ -221,14 +254,12 @@ function updateTablesByStatus(stocks, isAdmin) {
             defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
         }
 
-        // ADMİN VE MÜŞTERİ HÜCRE GÖRÜNÜMÜ AYRIMI (KÖRLÜK SİSTEMİ)
         let buyerCellHTML = "";
         let sellerCellHTML = "";
-        let customerStatusCellHTML = ""; // Sadece müşterilerin kendi teklif takibi için
+        let customerStatusCellHTML = ""; 
         let actionButtons = "";
 
         if (isAdmin) {
-            // Yönetici her iki tarafın ham tekliflerini ve muhasebeyi eksiksiz yönetir
             const buyerNotice = parsedOffers.buyer !== "Yok" ? `<span style="background:#eab308; color:#000; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">YENİ</span>` : "";
             const sellerNotice = parsedOffers.seller !== "Yok" ? `<span style="background:#eab308; color:#000; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">YENİ</span>` : "";
 
@@ -263,9 +294,7 @@ function updateTablesByStatus(stocks, isAdmin) {
                     <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
                 </td>`;
         } else {
-            // 🔒 MÜŞTERİ EKRANI (BİRBİRİNİN FİYATINI KESİNLİKLE GÖREMEZ)
             if (currentRole === "alici") {
-                // Alıcı sadece dükkanın SATIŞ FİYATINI görür. Satıcının dükkana ne fiyat verdiğini ASLA göremez!
                 buyerCellHTML = `<td style="color: #10b981; font-size:15px;"><strong>${sellPrice.toFixed(2)} TL</strong></td>`;
                 sellerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli Bölüm</td>`;
                 customerStatusCellHTML = `<td style="color:#10b981; font-size:12px;">Mevcut Teklifiniz: <br><strong>${parsedOffers.buyer}</strong></td>`;
@@ -281,21 +310,30 @@ function updateTablesByStatus(stocks, isAdmin) {
                         </div>
                     </td>`;
             } else {
-                // Satıcı sadece dükkanın ALIŞ FİYATINI görür. Alıcının dükkandan ne fiyata mal aldığını ASLA göremez!
                 buyerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli Bölüm</td>`;
                 sellerCellHTML = `<td style="color: #f97316; font-size:15px;"><strong>${buyPrice.toFixed(2)} TL</strong></td>`;
                 customerStatusCellHTML = `<td style="color:#f97316; font-size:12px;">Dükkana Arzınız: <br><strong>${parsedOffers.seller}</strong></td>`;
 
-                actionButtons = `
-                    <td>
-                        <div id="display-SATICI-${stock.id}">
-                            <button class="btn-seller" style="padding:6px 12px;" onclick="showInlineInput(${stock.id}, 'SATICI')">📦 Dükkana Sat / Fiyat Ver</button>
-                        </div>
-                        <div id="edit-SATICI-${stock.id}" style="display:none; gap:5px; align-items:center;">
-                            <input type="text" id="input-SATICI-${stock.id}" placeholder="Adet ve Fiyat Yazın" style="width:120px; background:#222; color:#fff; border:1px solid #f97316; padding:4px;">
-                            <button onclick="submitInlineOffer(${stock.id}, 'SATICI')" style="background:#f97316; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">✔️</button>
-                        </div>
-                    </td>`;
+                // ⚡ SATICI KENDİ YARATTIĞI TEKLİFİ SİLEBİLSİN (Dükkanın ana malını silemez!)
+                if (barcode === "Müşteri Arzı") {
+                    actionButtons = `
+                        <td>
+                            <div id="display-SATICI-${stock.id}">
+                                <button class="btn-delete" style="padding:6px 12px; font-size:12px;" onclick="deleteStockFromCloud(${stock.id})">❌ Teklifi İptal Et/Sil</button>
+                            </div>
+                        </td>`;
+                } else {
+                    actionButtons = `
+                        <td>
+                            <div id="display-SATICI-${stock.id}">
+                                <button class="btn-seller" style="padding:6px 12px;" onclick="showInlineInput(${stock.id}, 'SATICI')">📦 Dükkana Sat / Fiyat Ver</button>
+                            </div>
+                            <div id="edit-SATICI-${stock.id}" style="display:none; gap:5px; align-items:center;">
+                                <input type="text" id="input-SATICI-${stock.id}" placeholder="Adet ve Fiyat Yazın" style="width:120px; background:#222; color:#fff; border:1px solid #f97316; padding:4px;">
+                                <button onclick="submitInlineOffer(${stock.id}, 'SATICI')" style="background:#f97316; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">✔️</button>
+                            </div>
+                        </td>`;
+                }
             }
         }
 
@@ -352,9 +390,6 @@ function addCategoryTotalRow(tbody, totals) {
     tbody.appendChild(row);
 }
 
-// ==========================================
-// 5. SEÇİM ALANI SESSİZ AÇILIŞ MOTORU
-// ==========================================
 window.showInlineInput = function(id, role) {
     const dispEl = document.getElementById(`display-${role}-${id}`);
     const editEl = document.getElementById(`edit-${role}-${id}`);
@@ -362,9 +397,6 @@ window.showInlineInput = function(id, role) {
     if (editEl) editEl.style.display = "flex";
 }
 
-// ==========================================
-// 6. GÜVENLİ TEKLİF VE ADMİN SÜREÇ ONAY MOTORU
-// ==========================================
 window.submitInlineOffer = async function(id, role) {
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
@@ -415,9 +447,6 @@ window.submitInlineOffer = async function(id, role) {
     }
 }
 
-// ==========================================
-// 7. SATICININ SIFIRDAN DÜKKANA DİSK ARZ ETMESİ (MÜŞTERİ TEKLİFİ)
-// ==========================================
 window.submitNewOfferFromSeller = async function(event) {
     event.preventDefault();
 
@@ -428,7 +457,6 @@ window.submitNewOfferFromSeller = async function(event) {
     const count = document.getElementById("offer-count").value;
     const priceAndTel = document.getElementById("offer-price").value;
 
-    // Satıcının oluşturduğu teklif dizesi
     const offerNotes = `ALICI: Yok || SATICI: ${count} Adet - İstenen Fiyat/Tel: ${priceAndTel}`;
 
     try {
@@ -443,8 +471,8 @@ window.submitNewOfferFromSeller = async function(event) {
                 barcode: "Müşteri Arzı",
                 brand_name: brand,
                 capacity_gb: capacity,
-                model: inch, // inch verisini model sütununa eşledik
-                stock_count: 0, // Sen onaylayana kadar stoğa girmez
+                model: inch, 
+                stock_count: 0, 
                 price: 0,
                 sale_price: 0,
                 offer_notes: offerNotes,
@@ -462,9 +490,6 @@ window.submitNewOfferFromSeller = async function(event) {
     }
 }
 
-// ==========================================
-// 8. ADMİNİN BULUTTA STOK ADEDİ DEĞİŞTİRME (+ / -)
-// ==========================================
 window.changeStockInCloud = async function(id, amount) {
     const stockElement = document.getElementById(`stock-count-${id}`);
     if (!stockElement) return;
@@ -490,9 +515,6 @@ window.changeStockInCloud = async function(id, amount) {
     }
 }
 
-// ==========================================
-// 9. ADMİNİN SIFIRDAN YENİ HARD DİSK EKLEME (POST)
-// ==========================================
 window.addNewStock = async function(event) {
     event.preventDefault();
 
@@ -517,7 +539,7 @@ window.addNewStock = async function(event) {
                 barcode: barcode,
                 brand_name: brand,
                 capacity_gb: capacity,
-                model: inch, // inch verisi model sütununda saklanıyor
+                model: inch, 
                 stock_count: stock,
                 price: buyPrice,
                 sale_price: sellPrice,
@@ -535,10 +557,10 @@ window.addNewStock = async function(event) {
     }
 }
 
-// ==========================================
-// 10. BULUTTAN ÜRÜNÜ TAMAMEN SİLME (DELETE)
-// ==========================================
 window.deleteStockFromCloud = async function(id) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = (urlParams.get('mod') === 'ahmet');
+
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
             method: "DELETE",
@@ -549,16 +571,13 @@ window.deleteStockFromCloud = async function(id) {
         });
 
         if (response.ok) {
-            fetchStocksFromCloud(true);
+            fetchStocksFromCloud(isAdmin);
         }
     } catch (error) {
         console.error(error);
     }
 }
 
-// ==========================================
-// 11. BARKOD OKUTARAK SATIŞ YAPMA MANTIĞI
-// ==========================================
 window.barcodeSaleStockDrop = async function(event) {
     event.preventDefault();
     const barcodeInput = document.getElementById("scan-barcode-input");
