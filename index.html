@@ -23,6 +23,8 @@
         .btn-plus { background-color: #28a745; color: white; }
         .btn-minus { background-color: #ffc107; color: black; }
         .btn-delete { background-color: #dc3545; color: white; }
+        .total-row { background-color: #252525; font-weight: bold; }
+        .grand-total-box { background-color: #1a252f; padding: 15px; border-radius: 8px; margin-top: 30px; border: 1px solid #34495e; font-size: 18px; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
@@ -49,6 +51,10 @@
                 <input type="number" id="prod-stock" required placeholder="Örn: 5">
             </div>
             <div class="form-group">
+                <label>Birim Fiyatı (TL):</label>
+                <input type="number" id="prod-price" step="0.01" required placeholder="Örn: 1250.50">
+            </div>
+            <div class="form-group">
                 <label>Disk Durumu:</label>
                 <select id="prod-status">
                     <option value="Sağlıklı">Sağlıklı</option>
@@ -63,7 +69,7 @@
     <h2 class="section-healthy">🟢 Sağlıklı Diskler</h2>
     <table id="table-healthy">
         <thead>
-            <tr>
+            <tr id="header-healthy">
                 <th>Marka</th>
                 <th>Model</th>
                 <th>Boyut</th>
@@ -77,7 +83,7 @@
     <h2 class="section-low">🟡 Sağlığı Düşük Diskler</h2>
     <table id="table-low">
         <thead>
-            <tr>
+            <tr id="header-low">
                 <th>Marka</th>
                 <th>Model</th>
                 <th>Boyut</th>
@@ -91,7 +97,7 @@
     <h2 class="section-defective">🔴 Arızalı Diskler</h2>
     <table id="table-defective">
         <thead>
-            <tr>
+            <tr id="header-defective">
                 <th>Marka</th>
                 <th>Model</th>
                 <th>Boyut</th>
@@ -101,6 +107,10 @@
         </thead>
         <tbody></tbody>
     </table>
+
+    <div id="grand-total-section" class="grand-total-box">
+        💰 Tüm Depo Toplam Değeri: <span id="grand-total-value">0.00</span> TL
+    </div>
 
     <script src="app.js"></script>
 </body>
