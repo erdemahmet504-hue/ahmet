@@ -29,6 +29,9 @@
         .total-card { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #34495e; font-size: 16px; font-weight: bold; }
         .card-buy { background-color: #1a252f; border-color: #2980b9; }
         .card-sell { background-color: #1e2b24; border-color: #27ae60; }
+        
+        /* KRİTİK: Admin kolonlarını varsayılan olarak gizliyoruz, JS duruma göre açacak */
+        .admin-only { display: none; }
     </style>
 </head>
 <body>
@@ -86,13 +89,17 @@
         <h2 class="section-healthy">🟢 Sağlıklı Diskler ve Teklifler</h2>
         <table id="table-healthy">
             <thead>
-                <tr id="header-healthy">
+                <tr>
                     <th>Barkod</th>
                     <th>Marka</th>
                     <th>Model</th>
                     <th>Boyut</th>
                     <th>Mevcut Stok</th>
                     <th>Teklif / Durum Notu</th>
+                    <th class="admin-only">Alış Fiyatı</th>
+                    <th class="admin-only">Satış Fiyatı</th>
+                    <th class="admin-only">Toplam Alış</th>
+                    <th class="admin-only">Toplam Satış</th>
                     <th>İşlemler</th>
                 </tr>
             </thead>
@@ -100,4 +107,59 @@
         </table>
     </div>
 
-    <div id="container-low" style="display:
+    <div id="container-low" style="display: none;">
+        <h2 class="section-low">🟡 Sağlığı Düşük Diskler</h2>
+        <table id="table-low">
+            <thead>
+                <tr>
+                    <th>Barkod</th>
+                    <th>Marka</th>
+                    <th>Model</th>
+                    <th>Boyut</th>
+                    <th>Mevcut Stok</th>
+                    <th>Teklif / Durum Notu</th>
+                    <th class="admin-only">Alış Fiyatı</th>
+                    <th class="admin-only">Satış Fiyatı</th>
+                    <th class="admin-only">Toplam Alış</th>
+                    <th class="admin-only">Toplam Satış</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="container-defective" style="display: none;">
+        <h2 class="section-defective">🔴 Arızalı Diskler</h2>
+        <table id="table-defective">
+            <thead>
+                <tr>
+                    <th>Barkod</th>
+                    <th>Marka</th>
+                    <th>Model</th>
+                    <th>Boyut</th>
+                    <th>Mevcut Stok</th>
+                    <th>Teklif / Durum Notu</th>
+                    <th class="admin-only">Alış Fiyatı</th>
+                    <th class="admin-only">Satış Fiyatı</th>
+                    <th class="admin-only">Toplam Alış</th>
+                    <th class="admin-only">Toplam Satış</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="grand-total-section" class="grand-total-box">
+        <div class="total-card card-buy">
+            📉 Toplam Stok Maliyeti (Alış): <br><span id="grand-buy-value" style="font-size: 22px; color: #3498db;">0.00</span> TL
+        </div>
+        <div class="total-card card-sell">
+            📈 Toplam Muhtemel Ciro (Satış): <br><span id="grand-sell-value" style="font-size: 22px; color: #2ecc71;">0.00</span> TL
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

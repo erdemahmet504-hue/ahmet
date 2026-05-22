@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod');
     const isAdmin = (mode === 'ahmet');
 
-    // Panellerin görünürlüğünü ayarla
+    // Panellerin ve muhasebe kutularının görünürlüğünü ayarla
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
@@ -27,38 +27,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isAdmin) {
         if (containerLow) containerLow.style.display = "block";
         if (containerDefective) containerDefective.style.display = "block";
-        setupAdminHeaders();
+        
+        // Admin girmişse, HTML'deki gizli fiyat kolonlarını görünür yap
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = 'table-cell';
+        });
     } else {
-        // Müşteri modundaysak ne olur ne olmaz diye sıfırla
         if (containerLow) containerLow.style.display = "none";
         if (containerDefective) containerDefective.style.display = "none";
     }
 
     fetchStocksFromCloud(isAdmin);
 });
-
-function setupAdminHeaders() {
-    const headers = ["header-healthy", "header-low", "header-defective"];
-    headers.forEach(id => {
-        const row = document.getElementById(id);
-        if (row && row.children.length === 7) { // Başlıkların mükerrer eklenmesini önlemek için kontrol
-            const thBuyPrice = document.createElement("th");
-            thBuyPrice.innerText = "Alış Fiyatı";
-            const thSellPrice = document.createElement("th");
-            thSellPrice.innerText = "Satış Fiyatı";
-            const thTotalBuy = document.createElement("th");
-            thTotalBuy.innerText = "Toplam Alış";
-            const thTotalSell = document.createElement("th");
-            thTotalSell.innerText = "Toplam Satış";
-            
-            // Kolonları "Teklif / Durum Notu" başlığından (index 5) sonraya, "İşlemler"den önceye ekle
-            row.insertBefore(thBuyPrice, row.children[6]);
-            row.insertBefore(thSellPrice, row.children[7]);
-            row.insertBefore(thTotalBuy, row.children[8]);
-            row.insertBefore(thTotalSell, row.children[9]);
-        }
-    });
-}
 
 // ==========================================
 // 3. BULUTTAN VERİLERİ GETİRME (GET)
@@ -104,7 +84,7 @@ function updateTablesByStatus(stocks, isAdmin) {
     stocks.forEach(stock => {
         const currentStatus = (stock.status || "Sağlıklı").trim();
 
-        // KRİTİK FİLTRE: Eğer admin değilsek ve ürün Sağlıklı değilse listeye hiç alma
+        // Müşteriye sadece sağlıklı olanları göster, diğerlerini es geç
         if (!isAdmin && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
@@ -131,17 +111,18 @@ function updateTablesByStatus(stocks, isAdmin) {
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
         ` : `<span style="color: gray; font-size: 12px;">Müşteri Modu</span>`;
 
-        // Admin ise teklif hücresinin yanına düzenleme butonu fırlat
+        // Admin ise teklif hücresinin yanına düzenleme kalemi koy
         const offerDisplay = isAdmin ? `
             <span id="offer-text-${stock.id}">${offerNotes}</span>
             <button class="btn-edit-offer" onclick="updateOfferInCloud(${stock.id})">✍️</button>
         ` : `<span>${offerNotes}</span>`;
 
+        // Fiyat hücreleri (Admin modunda görünür olacak sınıfla birlikte)
         const adminCells = isAdmin ? `
-            <td>${buyPrice.toFixed(2)} TL</td>
-            <td>${sellPrice.toFixed(2)} TL</td>
-            <td style="color: #3498db;">${totalBuyRow.toFixed(2)} TL</td>
-            <td style="color: #2ecc71;"><strong>${totalSellRow.toFixed(2)} TL</strong></td>
+            <td class="admin-only" style="display: table-cell;">${buyPrice.toFixed(2)} TL</td>
+            <td class="admin-only" style="display: table-cell;">${sellPrice.toFixed(2)} TL</td>
+            <td class="admin-only" style="display: table-cell; color: #3498db;">${totalBuyRow.toFixed(2)} TL</td>
+            <td class="admin-only" style="display: table-cell; color: #2ecc71;"><strong>${totalSellRow.toFixed(2)} TL</strong></td>
         ` : "";
 
         row.innerHTML = `
@@ -183,6 +164,7 @@ function addCategoryTotalRow(tbody, totals) {
         <td colspan="6" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
         <td colspan="2" style="color: #3498db;">Alış: ${totals.buy.toFixed(2)} TL</td>
         <td colspan="2" style="color: #2ecc71;">Satış: ${totals.sell.toFixed(2)} TL</td>
+        <td></td>
     `;
     tbody.appendChild(row);
 }
@@ -195,9 +177,9 @@ window.updateOfferInCloud = async function(id) {
     if (!textElement) return;
 
     const currentOfferText = textElement.innerText;
-    const newOffer = prompt("Bu disk için güncel alım/satım teklifini veya durum notunu girin:", currentOfferText);
+    const newOffer = prompt("Bu disk için güncel alım/satım teklifini girin:", currentOfferText);
     
-    if (newOffer === null) return; // İptale bastıysa çık
+    if (newOffer === null) return; 
 
     const finalOffer = newOffer.trim() === "" ? "Teklif Yok" : newOffer.trim();
     textElement.innerText = finalOffer;
