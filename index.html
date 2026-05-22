@@ -87,6 +87,17 @@
 </head>
 <body>
 
+    <div id="customer-role-selector" style="background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #334155;">
+    <h4 style="margin-top: 0; color: #94a3b8; margin-bottom: 10px;">Lütfen Yapacağınız İşlemi Seçin:</h4>
+    <div style="display: flex; justify-content: center; gap: 20px;">
+        <label style="color: #10b981; font-weight: bold; cursor: pointer; font-size: 16px;">
+            <input type="radio" name="user-role-radio" value="alici" checked onclick="handleRoleChange()" style="transform: scale(1.2); margin-right: 8px;"> 🛒 Disk Satın Alacağım (Alıcı)
+        </label>
+        <label style="color: #f97316; font-weight: bold; cursor: pointer; font-size: 16px;">
+            <input type="radio" name="user-role-radio" value="satici" onclick="handleRoleChange()" style="transform: scale(1.2); margin-right: 8px;"> 📦 Dükkana Disk Satacağım (Satıcı)
+        </label>
+    </div>
+</div>
     <div class="brand-header">
         <div class="brand-logo">💻 ERDEM <span>BİLİŞİM</span></div>
         <div class="brand-subtitle">Canlı Stok Takip & Bölümlendirilmiş Satış ERP Sistemi</div>
