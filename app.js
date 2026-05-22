@@ -162,7 +162,6 @@ function updateTablesByStatus(stocks, isAdmin) {
             defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
         }
 
-        // Butonlar başlangıçta normal basılıyor
         const actionButtons = isAdmin ? `
             <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
             <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
@@ -184,7 +183,7 @@ function updateTablesByStatus(stocks, isAdmin) {
                 ${isAdmin ? `<button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'ALICI')">✍️ Onayla</button>` : ''}
             </div>
             <div id="edit-ALICI-${stock.id}" style="display:none; gap:5px; align-items: center;">
-                <input type="text" id="input-ALICI-${stock.id}" placeholder="Fiyat ve Tel" value="${isAdmin && parsedOffers.buyer !== "Yok" ? parsedOffers.buyer : ''}" style="width:100px; background:#222; color:#fff; border:1px solid #444; padding:3px; border-radius:3px;">
+                <input type="text" id="input-ALICI-${stock.id}" placeholder="Fiyat ve Tel" value="${parsedOffers.buyer === "Yok" ? "" : parsedOffers.buyer}" style="width:100px; background:#222; color:#fff; border:1px solid #444; padding:3px; border-radius:3px;">
                 <button onclick="submitInlineOffer(${stock.id}, 'ALICI')" style="background:#10b981; border:none; color:white; cursor:pointer; padding:3px 6px; border-radius:3px;">✔️</button>
                 ${!isAdmin ? `<button onclick="cancelInlineInput(${stock.id}, 'ALICI')" style="background:#ef4444; border:none; color:white; cursor:pointer; padding:3px 6px; border-radius:3px;">❌</button>` : ''}
             </div>
@@ -197,7 +196,7 @@ function updateTablesByStatus(stocks, isAdmin) {
                 ${isAdmin ? `<button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'SATICI')">✍️ Onayla</button>` : ''}
             </div>
             <div id="edit-SATICI-${stock.id}" style="display:none; gap:5px; align-items: center;">
-                <input type="text" id="input-SATICI-${stock.id}" placeholder="Fiyat ve Tel" value="${isAdmin && parsedOffers.seller !== "Yok" ? parsedOffers.seller : ''}" style="width:100px; background:#222; color:#fff; border:1px solid #444; padding:3px; border-radius:3px;">
+                <input type="text" id="input-SATICI-${stock.id}" placeholder="Fiyat ve Tel" value="${parsedOffers.seller === "Yok" ? "" : parsedOffers.seller}" style="width:100px; background:#222; color:#fff; border:1px solid #444; padding:3px; border-radius:3px;">
                 <button onclick="submitInlineOffer(${stock.id}, 'SATICI')" style="background:#10b981; border:none; color:white; cursor:pointer; padding:3px 6px; border-radius:3px;">✔️</button>
                 ${!isAdmin ? `<button onclick="cancelInlineInput(${stock.id}, 'SATICI')" style="background:#ef4444; border:none; color:white; cursor:pointer; padding:3px 6px; border-radius:3px;">❌</button>` : ''}
             </div>
@@ -256,19 +255,17 @@ function addCategoryTotalRow(tbody, totals) {
 }
 
 // ==========================================
-// 5. ⚡ ANLIK KİLİTLEME VE GİRİŞ ALANI AÇMA
+// 5. ANLIK KİLİTLEME VE GİRİŞ ALANI AÇMA
 // ==========================================
 window.showInlineInput = function(id, role) {
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
 
-    // Giriş kutularını aç
     const dispEl = document.getElementById(`display-${role}-${id}`);
     const editEl = document.getElementById(`edit-${role}-${id}`);
     if (dispEl) dispEl.style.display = "none";
     if (editEl) editEl.style.display = "flex";
 
-    // Eğer işlem yapan müşteri ise diğer butonu anında kilitliyoruz
     if (!isAdmin) {
         if (role === 'ALICI') {
             const otherBtn = document.getElementById(`btn-seller-${id}`);
@@ -288,14 +285,12 @@ window.showInlineInput = function(id, role) {
     }
 }
 
-// İptal Et butonuna basıldığında kilitleri açan fonksiyon
 window.cancelInlineInput = function(id, role) {
     const dispEl = document.getElementById(`display-${role}-${id}`);
     const editEl = document.getElementById(`edit-${role}-${id}`);
     if (dispEl) dispEl.style.display = "block";
     if (editEl) editEl.style.display = "none";
 
-    // Buton kilitlerini kaldır ve eski haline döndür
     const buyerBtn = document.getElementById(`btn-buyer-${id}`);
     const sellerBtn = document.getElementById(`btn-seller-${id}`);
     
@@ -312,28 +307,32 @@ window.cancelInlineInput = function(id, role) {
 }
 
 // ==========================================
-// 6. SESSİZ TEKLİF VE ADMİN SÜREÇ ONAY MOTORU
+// 6. ⚡ GÜVENLİ TEKLİF VE ADMİN SÜREÇ ONAY MOTORU
 // ==========================================
 window.submitInlineOffer = async function(id, role) {
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
     
+    // Hafızadaki en güncel ürünü buluyoruz
     const stockItem = globalStocks.find(s => s.id === id);
     if (!stockItem) return;
 
+    // Mevcut teklif verilerini parçalıyoruz (Böylece öteki tarafın verisi kaybolmayacak)
     const parsed = parseOfferNotes(stockItem.offer_notes);
     const inputVal = document.getElementById(`input-${role}-${id}`).value.trim();
 
+    // Sadece değişen rolün üzerine yazıyoruz, diğer rolün verisine ASLA dokunmuyoruz!
     if (role === 'ALICI') {
         parsed.buyer = inputVal === "" ? "Yok" : inputVal;
-    } else {
+    } else if (role === 'SATICI') {
         parsed.seller = inputVal === "" ? "Yok" : inputVal;
     }
 
+    // İki veriyi de koruyarak güvenli metni birleştiriyoruz
     const finalOfferString = `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller}`;
     let updatePayload = { offer_notes: finalOfferString };
 
-    // Admin onay tikine bastığında fiyat muhasebeye otomatik akar
+    // Eğer işlemi yapan admisse ve fiyat içeriyorsa muhasebe sütununa aktarır
     if (isAdmin && inputVal !== "") {
         const priceMatch = inputVal.match(/\d+(\.\d+)?/);
         if (priceMatch) {
