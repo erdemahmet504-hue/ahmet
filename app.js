@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod');
     const isAdmin = (mode === 'ahmet');
 
-    // Görünürlük ayarları
+    // Panel ve Özet Görünürlük Ayarları
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (containerLow) containerLow.style.display = "block";
         if (containerDefective) containerDefective.style.display = "block";
         
-        // CSS engellerini kaldır, admin hücrelerini aç
+        // Admin hücrelerini görünür yap
         document.querySelectorAll('.admin-only').forEach(el => {
             el.style.display = 'table-cell';
         });
@@ -57,7 +57,7 @@ async function fetchStocksFromCloud(isAdmin) {
 
         globalStocks = await response.json();
         if (Array.isArray(globalStocks)) {
-            // ID'ye göre sıralı gelsin ki her güncellemede yerleri oynamasın
+            // ID'ye göre sırala ki listenin yerleri değişmesin
             globalStocks.sort((a, b) => a.id - b.id);
             updateTablesByStatus(globalStocks, isAdmin);
         }
@@ -67,7 +67,7 @@ async function fetchStocksFromCloud(isAdmin) {
 }
 
 // ==========================================
-// 4. TABLOYA VERİLERİ VE İKİLİ BUTONLARI BASMA MOTORU
+// 4. TABLO MOTORU VE TEKLİF GÖSTERİMİ
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -83,26 +83,23 @@ function updateTablesByStatus(stocks, isAdmin) {
     let defectiveTotals = { buy: 0, sell: 0 };
 
     stocks.forEach(stock => {
-        // ÇÖKME ENGELLEYİCİ KALKAN (Veritabanında kolon adı ne olursa olsun hata vermez)
-        const currentStatus = (stock.status || stock.durum || "Sağlıklı").trim();
-        const brand = stock.brand_name || stock.marka_adı || stock.marka || "---";
+        const currentStatus = (stock.status || "Sağlıklı").trim();
+        const brand = stock.brand_name || "---";
         const model = stock.model || "---";
-        const capacity = stock.capacity_gb || stock.kapasite_gb || stock.kapasite || "---";
-        const barcode = stock.barcode || stock.barkod || "---";
-        const offerNotes = stock.offer_notes || stock.teklif_notu || "Teklif Yok";
+        const capacity = stock.capacity_gb || "---";
+        const barcode = stock.barcode || "---";
+        const offerNotes = stock.offer_notes || "Teklif Yok";
 
-        const count = parseInt(stock.stock_count || stock.stok_sayısı || stock.stok || 0);
-        const buyPrice = parseFloat(stock.price || stock.fiyat || stock.alis_fiyati || 0);
-        const sellPrice = parseFloat(stock.sale_price || stock.satis_fiyati || 0);
+        const count = parseInt(stock.stock_count || 0);
+        const buyPrice = parseFloat(stock.price || 0);
+        const sellPrice = parseFloat(stock.sale_price || 0);
         
-        // Müşteri modundaysak bozuk/düşük sağlıkları listeye hiç ekleme
         if (!isAdmin && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
         const totalBuyRow = count * buyPrice;
         const totalSellRow = count * sellPrice;
 
-        // Muhasebe hesaplamaları gruplama
         if (currentStatus === "Sağlıklı") {
             healthyTotals.buy += totalBuyRow; healthyTotals.sell += totalSellRow;
         } else if (currentStatus === "Sağlığı Düşük") {
@@ -111,23 +108,21 @@ function updateTablesByStatus(stocks, isAdmin) {
             defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
         }
 
-        // BUTON AYRIMI: Admin ise yönetim paneli, Müşteri ise İkiye Bölünmüş Alıcı/Satıcı butonları
+        // İŞLEMLER BUTONU
         const actionButtons = isAdmin ? `
             <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
             <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
         ` : `
             <button class="btn-buyer" onclick="customerSendOfferSplit(${stock.id}, 'ALICI')">🛒 Satın Al</button>
-            <button class="btn-seller" onclick="customerSendOfferSplit(${stock.id}, '📦 Satmak İstiyorum')">📦 Bana Sat</button>
+            <button class="btn-seller" onclick="customerSendOfferSplit(${stock.id}, 'SATICI')">📦 Bana Sat</button>
         `;
 
-        // Teklif sütununun görünümü
         const offerDisplay = isAdmin ? `
             <span id="offer-text-${stock.id}">${offerNotes}</span>
             <button class="btn-edit-offer" onclick="updateOfferInCloud(${stock.id})">✍️</button>
         ` : `<span id="offer-text-${stock.id}">${offerNotes}</span>`;
 
-        // Admin hücre içerikleri
         const adminCells = isAdmin ? `
             <td class="admin-only" style="display: table-cell;">${buyPrice.toFixed(2)} TL</td>
             <td class="admin-only" style="display: table-cell;">${sellPrice.toFixed(2)} TL</td>
@@ -188,9 +183,9 @@ window.customerSendOfferSplit = async function(id, role) {
 
     let promptMessage = "";
     if (role === 'ALICI') {
-        promptMessage = "Bu diski satın almak için fiyat teklifinizi ve iletişim numaranızı yazın:\n(Örn: 1500 TL almak istiyorum - 05xx)";
+        promptMessage = "Bu diski satın almak için fiyat teklifinizi ve telefon numaranızı yazın:\n(Örn: 1400 TL almak istiyorum - 05xx)";
     } else {
-        promptMessage = "Elinizdeki diski dükkana satmak için istediğiniz fiyatı ve iletişim numaranızı yazın:\n(Örn: Elimde sıfır var 950 TL'ye satarım - 05xx)";
+        promptMessage = "Elinizdeki diski dükkana satmak için istediğiniz fiyatı ve telefon numaranızı yazın:\n(Örn: Elimde var 900 TL'ye satarım - 05xx)";
     }
 
     const customerOffer = prompt(promptMessage);
@@ -199,12 +194,10 @@ window.customerSendOfferSplit = async function(id, role) {
     let currentText = textElement.innerText;
     if (currentText === "Teklif Yok") currentText = "";
 
-    // Eski teklifi koruyup sonuna [ALICI: ...] ekler
     const finalOffer = currentText ? `${currentText} | [${role}: ${customerOffer.trim()}]` : `[${role}: ${customerOffer.trim()}]`;
-    textElement.innerText = finalOffer;
 
     try {
-        await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
+        const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
             method: "PATCH",
             headers: {
                 "apikey": SUPABASE_KEY,
@@ -212,30 +205,34 @@ window.customerSendOfferSplit = async function(id, role) {
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal"
             },
-            body: JSON.stringify({ offer_notes: finalOffer, teklif_notu: finalOffer })
+            body: JSON.stringify({ offer_notes: finalOffer })
         });
-        alert("Teklifiniz sisteme başarıyla kaydedildi!");
+
+        if (response.ok) {
+            alert("Teklifiniz başarıyla buluta iletildi!");
+            // Müşteri modunda listeyi canlı yenile (isAdmin = false)
+            fetchStocksFromCloud(false);
+        }
     } catch (error) {
-        console.error("Teklif gönderilirken hata oluştu:", error);
+        console.error("Teklif gönderme hatası:", error);
     }
 }
 
 // ==========================================
-// 6. ADMIN LİSTEDEN ANLIK TEKLİF DÜZENLEME (PATCH)
+// 6. ADMIN LİSTEDEN ANLIK TEKLİF DÜZENLEME (PATCH) -> ARTIK ANLIK YENİLENİYOR!
 // ==========================================
 window.updateOfferInCloud = async function(id) {
     const textElement = document.getElementById(`offer-text-${id}`);
     if (!textElement) return;
 
     const currentOfferText = textElement.innerText;
-    const newOffer = prompt("Teklif notunu baştan güncelleyin (Veya müşteri yazılarını silmek için temizleyin):", currentOfferText);
+    const newOffer = prompt("Teklif notunu düzenleyin (Müşteri yazılarını silmek veya onaylamak için):", currentOfferText);
     if (newOffer === null) return; 
 
     const finalOffer = newOffer.trim() === "" ? "Teklif Yok" : newOffer.trim();
-    textElement.innerText = finalOffer;
 
     try {
-        await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
+        const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
             method: "PATCH",
             headers: {
                 "apikey": SUPABASE_KEY,
@@ -243,10 +240,15 @@ window.updateOfferInCloud = async function(id) {
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal"
             },
-            body: JSON.stringify({ offer_notes: finalOffer, teklif_notu: finalOffer })
+            body: JSON.stringify({ offer_notes: finalOffer })
         });
+
+        if (response.ok) {
+            // İŞTE ÇÖZÜM: Admin modunda listeyi anında buluttan çekip canlı tazeliyoruz (isAdmin = true)
+            fetchStocksFromCloud(true);
+        }
     } catch (error) {
-        console.error("Teklif düzenleme hatası:", error);
+        console.error("Teklif güncellenemedi:", error);
     }
 }
 
@@ -272,10 +274,10 @@ window.changeStockInCloud = async function(id, amount) {
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal"
             },
-            body: JSON.stringify({ stock_count: newStock, stok_sayısı: newStock, stok: newStock })
+            body: JSON.stringify({ stock_count: newStock })
         });
     } catch (error) {
-        console.error("Stok adedi güncellenemedi:", error);
+        console.error("Stok güncellenemedi:", error);
     }
 }
 
@@ -296,7 +298,7 @@ window.addNewStock = async function(event) {
     const status = document.getElementById("prod-status").value;
 
     try {
-        await fetch(`${SUPABASE_URL}/stocks`, {
+        const response = await fetch(`${SUPABASE_URL}/stocks`, {
             method: "POST",
             headers: {
                 "apikey": SUPABASE_KEY,
@@ -306,9 +308,7 @@ window.addNewStock = async function(event) {
             },
             body: JSON.stringify({
                 barcode: barcode,
-                barkod: barcode,
                 brand_name: brand,
-                marka_adı: brand,
                 model: model,
                 capacity_gb: capacity,
                 stock_count: stock,
@@ -319,11 +319,12 @@ window.addNewStock = async function(event) {
             })
         });
 
-        document.getElementById("add-stock-form").reset();
-        alert("Ürün başarıyla veritabanına eklendi!");
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
+        if (response.ok) {
+            document.getElementById("add-stock-form").reset();
+            alert("Ürün başarıyla veritabanına eklendi!");
+            const urlParams = new URLSearchParams(window.location.search);
+            fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
+        }
     } catch (error) {
         console.error("Ürün eklenirken hata oluştu:", error);
     }
