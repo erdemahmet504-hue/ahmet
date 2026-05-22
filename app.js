@@ -14,9 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod');
     const isAdmin = (mode === 'ahmet');
 
-    // Panel ve Özet Görünürlük Ayarları
+    // Panellerin Görünürlük Ayarları
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
+
+    const barcodeSaleSection = document.getElementById("barcode-sale-panel");
+    if (barcodeSaleSection) barcodeSaleSection.style.display = isAdmin ? "block" : "none";
 
     const grandTotalSection = document.getElementById("grand-total-section");
     if (grandTotalSection) grandTotalSection.style.display = isAdmin ? "flex" : "none";
@@ -102,7 +105,6 @@ function updateTablesByStatus(stocks, isAdmin) {
         const capacity = stock.capacity_gb || "---";
         const barcode = stock.barcode || "---";
         
-        // Teklif formatını Alıcı ve Satıcı olarak 2'ye bölüyoruz
         const parsedOffers = parseOfferNotes(stock.offer_notes);
 
         const count = parseInt(stock.stock_count || 0);
@@ -123,7 +125,6 @@ function updateTablesByStatus(stocks, isAdmin) {
             defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
         }
 
-        // İŞLEMLER BUTONU AYRIMI
         const actionButtons = isAdmin ? `
             <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
             <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
@@ -133,7 +134,6 @@ function updateTablesByStatus(stocks, isAdmin) {
             <button class="btn-seller" onclick="customerSendOfferSplit(${stock.id}, 'SATICI')">📦 Bana Sat</button>
         `;
 
-        // EN KRİTİK YER: Admin ise hem Alıcı hem Satıcı tekliflerinin yanına mor düzenleme kalemi koyuyoruz!
         const buyerDisplay = isAdmin ? `
             <span>${parsedOffers.buyer}</span>
             <button class="btn-edit-offer" onclick="adminEditOfferDirect(${stock.id}, 'ALICI')">✍️</button>
@@ -157,8 +157,8 @@ function updateTablesByStatus(stocks, isAdmin) {
             <td>${model}</td>
             <td>${capacity} GB</td>
             <td><strong id="stock-count-${stock.id}">${count}</strong></td>
-            <td style="color: #2ecc71; font-weight: bold;">${buyerDisplay}</td>
-            <td style="color: #e67e22; font-weight: bold;">${sellerDisplay}</td>
+            <td style="color: #2ecc71; font-weight: bold;">${parsedOffers.buyer}</td>
+            <td style="color: #e67e22; font-weight: bold;">${parsedOffers.seller}</td>
             ${adminCells}
             <td>${actionButtons}</td>
         `;
@@ -233,17 +233,14 @@ window.customerSendOfferSplit = async function(id, role) {
         if (response.ok) {
             alert("Teklifiniz başarıyla karşı tarafa iletildi!");
             fetchStocksFromCloud(false);
-        } else {
-            const errData = await response.json();
-            alert("Hata: " + JSON.stringify(errData));
         }
     } catch (error) {
-        alert("Bağlantı Hatası: " + error.message);
+        console.error(error);
     }
 }
 
 // ==========================================
-// 6. ADMIN DOĞRUDAN ALICI VEYA SATICI SÜTUNUNU DÜZENLEME FONKSİYONU
+// 6. ADMIN DOĞRUDAN ALICI VEYA SATICI SÜTUNUNU DÜZENLEME
 // ==========================================
 window.adminEditOfferDirect = async function(id, role) {
     const stockItem = globalStocks.find(s => s.id === id);
@@ -251,11 +248,11 @@ window.adminEditOfferDirect = async function(id, role) {
 
     let currentVal = (role === 'ALICI') ? parsed.buyer : parsed.seller;
     
-    const newOffer = prompt(`${role} sütunundaki teklifi düzenleyin veya dükkan fiyatını girin:\n(Temizlemek için boş bırakıp tamam deyin)`, currentVal === "Yok" ? "" : currentVal);
+    const newOffer = prompt(`${role} sütunundaki teklifi düzenleyin veya dükkan fiyatını girin:`, currentVal === "Yok" ? "" : currentVal);
     if (newOffer === null) return; 
 
     if (role === 'ALICI') {
-        parsed.buyer = newNote = newOffer.trim() === "" ? "Yok" : newOffer.trim();
+        parsed.buyer = newOffer.trim() === "" ? "Yok" : newOffer.trim();
     } else {
         parsed.seller = newOffer.trim() === "" ? "Yok" : newOffer.trim();
     }
@@ -275,13 +272,10 @@ window.adminEditOfferDirect = async function(id, role) {
         });
 
         if (response.ok) {
-            fetchStocksFromCloud(true); // Admin modunda listeyi anında yenile
-        } else {
-            const errData = await response.json();
-            alert("Veritabanı Hatası: " + JSON.stringify(errData));
+            fetchStocksFromCloud(true);
         }
     } catch (error) {
-        alert("Bağlantı Hatası: " + error.message);
+        console.error(error);
     }
 }
 
@@ -353,11 +347,10 @@ window.addNewStock = async function(event) {
         if (response.ok) {
             document.getElementById("add-stock-form").reset();
             alert("Ürün başarıyla veritabanına eklendi!");
-            const urlParams = new URLSearchParams(window.location.search);
-            fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
+            fetchStocksFromCloud(true);
         }
     } catch (error) {
-        console.error("Ürün eklenirken hata oluştu:", error);
+        console.error(error);
     }
 }
 
@@ -378,10 +371,69 @@ window.deleteStockFromCloud = async function(id) {
 
         if (response.ok) {
             alert("Ürün başarıyla silindi!");
-            const urlParams = new URLSearchParams(window.location.search);
-            fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
+            fetchStocksFromCloud(true);
         }
     } catch (error) {
-        console.error("Silme hatası:", error);
+        console.error(error);
+    }
+}
+
+// ==========================================
+// 10. ⚡ BARKOD OKUTARAK ANLIK SATIŞ VE STOK DÜŞME FONKSİYONU
+// ==========================================
+window.barcodeSaleStockDrop = async function(event) {
+    event.preventDefault();
+    
+    const barcodeInput = document.getElementById("scan-barcode-input");
+    const scannedBarcode = barcodeInput.value.trim();
+    
+    if (!scannedBarcode) return;
+
+    // Buluttan çekilen mevcut listede bu barkoda ait ürünü ara
+    const matchedStock = globalStocks.find(s => s.barcode && s.barcode.trim() === scannedBarcode);
+
+    if (!matchedStock) {
+        alert(`❌ Hata: ${scannedBarcode} barkodlu ürün sistemde bulunamadı! Önce sisteme kaydetmelisiniz.`);
+        barcodeInput.value = "";
+        barcodeInput.focus();
+        return;
+    }
+
+    let currentStockCount = parseInt(matchedStock.stock_count || 0);
+
+    if (currentStockCount <= 0) {
+        alert(`⚠️ Bu ürünün stoğu zaten 0 adet! Satış yapılamaz.`);
+        barcodeInput.value = "";
+        barcodeInput.focus();
+        return;
+    }
+
+    // Stoğu 1 düşür
+    let newStockCount = currentStockCount - 1;
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${matchedStock.id}`, {
+            method: "PATCH",
+            headers: {
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=representation"
+            },
+            body: JSON.stringify({ stock_count: newStockCount })
+        });
+
+        if (response.ok) {
+            // Başarılı satış bildirimi ve sesli uyarı etkisi için input temizleme
+            barcodeInput.value = "";
+            barcodeInput.focus();
+            
+            // Ekranı anlık güncelle
+            fetchStocksFromCloud(true);
+        } else {
+            alert("Stok güncellenirken bir bulut hatası oluştu.");
+        }
+    } catch (error) {
+        alert("Bağlantı hatası: " + error.message);
     }
 }

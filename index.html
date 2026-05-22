@@ -15,10 +15,12 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
         th { background-color: #2d2d2d; }
         .admin-box { background-color: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
+        .sales-box { background-color: #2c1a3a; border: 1px solid #8e44ad; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; }
         .form-group input, .form-group select { padding: 8px; border-radius: 4px; width: 100%; max-width: 300px; background-color: #2b2b2b; color: white; border: 1px solid #444; }
         .btn-submit { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-barcode-sale { background-color: #8e44ad; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
         .btn-action { padding: 5px 10px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
         .btn-plus { background-color: #28a745; color: white; }
         .btn-minus { background-color: #ffc107; color: black; }
@@ -40,6 +42,19 @@
 <body>
 
     <h1>Disk Stok Takip ve Canlı Teklif Paneli</h1>
+
+    <div id="barcode-sale-panel" class="sales-box" style="display: none;">
+        <h2 style="color: #9b59b6; margin-top: 0;">⚡ Hızlı Barkod Okutarak Satış Yap (Stok Düş)</h2>
+        <form id="barcode-sale-form" onsubmit="barcodeSaleStockDrop(event)">
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <div>
+                    <label>Barkodu Okutun ve Enter'a Basın:</label>
+                    <input type="text" id="scan-barcode-input" placeholder="Barkod cihazı buraya yazar..." autocomplete="off">
+                </div>
+                <button type="submit" class="btn-barcode-sale">Direkt Sattım</button>
+            </div>
+        </form>
+    </div>
 
     <div id="admin-panel" class="admin-box" style="display: none;">
         <h2>Yeni Ürün Kaydı (İlk Ekleme)</h2>
@@ -73,7 +88,7 @@
                 <input type="number" id="prod-sale-price" step="0.01" value="0">
             </div>
             <div class="form-group">
-                <label>İlk Teklif Durumu (Format: ALICI: Yok || SATICI: Yok):</label>
+                <label>İlk Teklif Durumu:</label>
                 <input type="text" id="prod-offer" value="ALICI: Yok || SATICI: Yok">
             </div>
             <div class="form-group">
