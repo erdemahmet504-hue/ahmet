@@ -24,11 +24,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const containerLow = document.getElementById("container-low");
     const containerDefective = document.getElementById("container-defective");
     
+    // HTML Başlıklarını Yeni Sütunlara Göre Güncelleme (Dinamik Tablo Başlığı)
+    updateTableHeaders(isAdmin);
+
     if (isAdmin) {
         if (containerLow) containerLow.style.display = "block";
         if (containerDefective) containerDefective.style.display = "block";
         
-        // Admin hücrelerini görünür yap
         document.querySelectorAll('.admin-only').forEach(el => {
             el.style.display = 'table-cell';
         });
@@ -39,6 +41,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fetchStocksFromCloud(isAdmin);
 });
+
+// Tablo başlıklarını Alıcı, Satıcı ve Admin Notu olarak 3 sütuna bölen fonksiyon
+function updateTableHeaders(isAdmin) {
+    ["table-healthy", "table-low", "table-defective"].forEach(tableId => {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        const theadRow = table.querySelector("thead tr");
+        if (!theadRow) return;
+
+        // Admin hücreleri ve işlemler butonu hariç temel başlık yapısı
+        let headersHTML = `
+            <th>Barkod</th>
+            <th>Marka</th>
+            <th>Model</th>
+            <th>Boyut</th>
+            <th>Mevcut Stok</th>
+            <th style="color: #2ecc71;">Alıcı Teklifi</th>
+            <th style="color: #e67e22;">Satıcı Teklifi</th>
+            <th style="color: #9b59b6;">Usta / Admin Notu</th>
+        `;
+
+        if (isAdmin) {
+            headersHTML += `
+                <th class="admin-only">Alış Fiyatı</th>
+                <th class="admin-only">Satış Fiyatı</th>
+                <th class="admin-only">Toplam Alış</th>
+                <th class="admin-only">Toplam Satış</th>
+            `;
+        }
+
+        headersHTML += `<th>İşlemler</th>`;
+        theadRow.innerHTML = headersHTML;
+    });
+}
 
 // ==========================================
 // 3. BULUTTAN VERİLERİ GETİRME (GET)
@@ -57,7 +93,6 @@ async function fetchStocksFromCloud(isAdmin) {
 
         globalStocks = await response.json();
         if (Array.isArray(globalStocks)) {
-            // ID'ye göre sırala ki listenin yerleri değişmesin
             globalStocks.sort((a, b) => a.id - b.id);
             updateTablesByStatus(globalStocks, isAdmin);
         }
@@ -66,8 +101,25 @@ async function fetchStocksFromCloud(isAdmin) {
     }
 }
 
+// Teklif metnini parçalara ayıran yardımcı fonksiyon
+function parseOfferNotes(rawNotes) {
+    let buyer = "Yok";
+    let seller = "Yok";
+    let admin = "Not Yok";
+
+    if (rawNotes && rawNotes !== "Teklif Yok") {
+        const parts = rawNotes.split("||");
+        parts.forEach(part => {
+            if (part.startsWith("ALICI:")) buyer = part.replace("ALICI:", "").trim();
+            else if (part.startsWith("SATICI:")) seller = part.replace("SATICI:", "").trim();
+            else if (part.startsWith("ADMIN:")) admin = part.replace("ADMIN:", "").trim();
+        });
+    }
+    return { buyer, seller, admin };
+}
+
 // ==========================================
-// 4. TABLO MOTORU VE TEKLİF GÖSTERİMİ
+// 4. TABLO MOTORU VE YENİ SÜTUN DÜZENİ
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -88,7 +140,9 @@ function updateTablesByStatus(stocks, isAdmin) {
         const model = stock.model || "---";
         const capacity = stock.capacity_gb || "---";
         const barcode = stock.barcode || "---";
-        const offerNotes = stock.offer_notes || "Teklif Yok";
+        
+        // Teklif formatını Alıcı, Satıcı ve Admin olarak 3'e bölüyoruz
+        const parsedOffers = parseOfferNotes(stock.offer_notes);
 
         const count = parseInt(stock.stock_count || 0);
         const buyPrice = parseFloat(stock.price || 0);
@@ -118,10 +172,11 @@ function updateTablesByStatus(stocks, isAdmin) {
             <button class="btn-seller" onclick="customerSendOfferSplit(${stock.id}, 'SATICI')">📦 Bana Sat</button>
         `;
 
-        const offerDisplay = isAdmin ? `
-            <span id="offer-text-${stock.id}">${offerNotes}</span>
-            <button class="btn-edit-offer" onclick="updateOfferInCloud(${stock.id})">✍️</button>
-        ` : `<span id="offer-text-${stock.id}">${offerNotes}</span>`;
+        // Admin ise Usta Notunun yanında mor kalem çıkar, normal kullanıcı sadece yazıyı görür
+        const adminNoteDisplay = isAdmin ? `
+            <span>${parsedOffers.admin}</span>
+            <button class="btn-edit-offer" onclick="updateAdminNoteInCloud(${stock.id})">✍️</button>
+        ` : `<span>${parsedOffers.admin}</span>`;
 
         const adminCells = isAdmin ? `
             <td class="admin-only" style="display: table-cell;">${buyPrice.toFixed(2)} TL</td>
@@ -136,7 +191,9 @@ function updateTablesByStatus(stocks, isAdmin) {
             <td>${model}</td>
             <td>${capacity} GB</td>
             <td><strong id="stock-count-${stock.id}">${count}</strong></td>
-            <td style="color: #f1c40f; font-style: italic;">${offerDisplay}</td>
+            <td style="color: #2ecc71;">${parsedOffers.buyer}</td>
+            <td style="color: #e67e22;">${parsedOffers.seller}</td>
+            <td style="color: #9b59b6; font-weight: bold;">${adminNoteDisplay}</td>
             ${adminCells}
             <td>${actionButtons}</td>
         `;
@@ -166,35 +223,38 @@ function addCategoryTotalRow(tbody, totals) {
     const row = document.createElement("tr");
     row.className = "total-row";
     row.innerHTML = `
-        <td colspan="6" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
-        <td colspan="2" style="color: #3498db;">Alış: ${totals.buy.toFixed(2)} TL</td>
-        <td colspan="2" style="color: #2ecc71;">Satış: ${totals.sell.toFixed(2)} TL</td>
+        <td colspan="9" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
+        <td style="color: #3498db;">Alış: ${totals.buy.toFixed(2)} TL</td>
+        <td style="color: #2ecc71;">Satış: ${totals.sell.toFixed(2)} TL</td>
         <td></td>
     `;
     tbody.appendChild(row);
 }
 
 // ==========================================
-// 5. MÜŞTERİ İKİLİ TEKLİF VERME FONKSİYONU (PATCH)
+// 5. MÜŞTERİ AYRI TEKLİF VERME FONKSİYONU
 // ==========================================
 window.customerSendOfferSplit = async function(id, role) {
-    const textElement = document.getElementById(`offer-text-${id}`);
-    if (!textElement) return;
+    // Önce mevcut kaydı buluyoruz ki diğer teklifler silinmesin
+    const stockItem = globalStocks.find(s => s.id === id);
+    const parsed = parseOfferNotes(stockItem ? stockItem.offer_notes : "");
 
     let promptMessage = "";
     if (role === 'ALICI') {
-        promptMessage = "Bu diski satın almak için fiyat teklifinizi ve telefon numaranızı yazın:\n(Örn: 1400 TL almak istiyorum - 05xx)";
+        promptMessage = "Bu diski satın almak için teklifinizi ve numaranızı yazın:\n(Örn: 1400 TL - 05xx)";
     } else {
-        promptMessage = "Elinizdeki diski dükkana satmak için istediğiniz fiyatı ve telefon numaranızı yazın:\n(Örn: Elimde var 900 TL'ye satarım - 05xx)";
+        promptMessage = "Elinizdeki diski dükkana satmak için istediğiniz fiyatı ve numaranızı yazın:\n(Örn: 900 TL - 05xx)";
     }
 
     const customerOffer = prompt(promptMessage);
     if (customerOffer === null || customerOffer.trim() === "") return;
 
-    let currentText = textElement.innerText;
-    if (currentText === "Teklif Yok") currentText = "";
+    // Rol bilgisine göre ilgili kısmı güncelliyoruz, diğerlerine dokunmuyoruz
+    if (role === 'ALICI') parsed.buyer = customerOffer.trim();
+    else parsed.seller = customerOffer.trim();
 
-    const finalOffer = currentText ? `${currentText} | [${role}: ${customerOffer.trim()}]` : `[${role}: ${customerOffer.trim()}]`;
+    // Veritabanı için string'i tekrar birleştiriyoruz
+    const finalOfferString = `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller} || ADMIN: ${parsed.admin}`;
 
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
@@ -203,33 +263,36 @@ window.customerSendOfferSplit = async function(id, role) {
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
                 "Content-Type": "application/json",
-                "Prefer": "return=minimal"
+                "Prefer": "return=representation"
             },
-            body: JSON.stringify({ offer_notes: finalOffer })
+            body: JSON.stringify({ offer_notes: finalOfferString })
         });
 
         if (response.ok) {
-            alert("Teklifiniz başarıyla buluta iletildi!");
-            // Müşteri modunda listeyi canlı yenile (isAdmin = false)
+            alert("Teklifiniz başarıyla iletildi!");
             fetchStocksFromCloud(false);
+        } else {
+            const errData = await response.json();
+            alert("Hata: " + JSON.stringify(errData));
         }
     } catch (error) {
-        console.error("Teklif gönderme hatası:", error);
+        alert("Bağlantı Hatası: " + error.message);
     }
 }
 
 // ==========================================
-// 6. ADMIN LİSTEDEN ANLIK TEKLİF DÜZENLEME (PATCH) -> ARTIK ANLIK YENİLENİYOR!
+// 6. ADMIN NOTU DÜZENLEME FONKSİYONU (MÜŞTERİ DE GÖRECEK)
 // ==========================================
-window.updateOfferInCloud = async function(id) {
-    const textElement = document.getElementById(`offer-text-${id}`);
-    if (!textElement) return;
+window.updateAdminNoteInCloud = async function(id) {
+    const stockItem = globalStocks.find(s => s.id === id);
+    const parsed = parseOfferNotes(stockItem ? stockItem.offer_notes : "");
 
-    const currentOfferText = textElement.innerText;
-    const newOffer = prompt("Teklif notunu düzenleyin (Müşteri yazılarını silmek veya onaylamak için):", currentOfferText);
-    if (newOffer === null) return; 
+    const newNote = prompt("Usta Notunu / Cevabını Yazın (Müşteriler bu notu canlı görebilir):", parsed.admin === "Not Yok" ? "" : parsed.admin);
+    if (newNote === null) return; 
 
-    const finalOffer = newOffer.trim() === "" ? "Teklif Yok" : newOffer.trim();
+    parsed.admin = newNote.trim() === "" ? "Not Yok" : newNote.trim();
+
+    const finalOfferString = `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller} || ADMIN: ${parsed.admin}`;
 
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
@@ -238,17 +301,19 @@ window.updateOfferInCloud = async function(id) {
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
                 "Content-Type": "application/json",
-                "Prefer": "return=minimal"
+                "Prefer": "return=representation"
             },
-            body: JSON.stringify({ offer_notes: finalOffer })
+            body: JSON.stringify({ offer_notes: finalOfferString })
         });
 
         if (response.ok) {
-            // İŞTE ÇÖZÜM: Admin modunda listeyi anında buluttan çekip canlı tazeliyoruz (isAdmin = true)
             fetchStocksFromCloud(true);
+        } else {
+            const errData = await response.json();
+            alert("Veritabanı Hatası: " + JSON.stringify(errData));
         }
     } catch (error) {
-        console.error("Teklif güncellenemedi:", error);
+        alert("Bağlantı Hatası: " + error.message);
     }
 }
 
@@ -271,8 +336,7 @@ window.changeStockInCloud = async function(id, amount) {
             headers: {
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({ stock_count: newStock })
         });
@@ -294,7 +358,7 @@ window.addNewStock = async function(event) {
     const stock = parseInt(document.getElementById("prod-stock").value);
     const buyPrice = parseFloat(document.getElementById("prod-price").value || 0);
     const sellPrice = parseFloat(document.getElementById("prod-sale-price").value || 0);
-    const offerNotes = document.getElementById("prod-offer").value || "Teklif Yok";
+    const offerNotes = document.getElementById("prod-offer").value || "ALICI: Yok || SATICI: Yok || ADMIN: Not Yok";
     const status = document.getElementById("prod-status").value;
 
     try {
@@ -303,8 +367,7 @@ window.addNewStock = async function(event) {
             headers: {
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 barcode: barcode,
