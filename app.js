@@ -51,7 +51,10 @@ async function fetchStocksFromCloud(isAdmin) {
             }
         });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+            console.error("Veritabanı yanıt vermedi.");
+            return;
+        }
 
         globalStocks = await response.json();
         if (Array.isArray(globalStocks)) {
@@ -64,7 +67,7 @@ async function fetchStocksFromCloud(isAdmin) {
 }
 
 // ==========================================
-// 4. VERİLERİ HESAPLAMA VE TABLOLARA BASMA MOTORU
+// 4. HATA KORUMALI TABLO MOTORU
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -80,17 +83,21 @@ function updateTablesByStatus(stocks, isAdmin) {
     let defectiveTotals = { buy: 0, sell: 0 };
 
     stocks.forEach(stock => {
-        const currentStatus = (stock.status || "Sağlıklı").trim();
+        // ÇÖKME ENGELLEYİCİ GÜVENLİK KALKANI (KOLON ISIMLERI ESLESMEZSE UÇMASIN)
+        const currentStatus = (stock.status || stock.durum || "Sağlıklı").trim();
+        const brand = stock.brand_name || stock.marka_adı || stock.marka || "---";
+        const model = stock.model || "---";
+        const capacity = stock.capacity_gb || stock.kapasite_gb || stock.kapasite || "---";
+        const barcode = stock.barcode || stock.barkod || "---";
+        const offerNotes = stock.offer_notes || stock.teklif_notu || "Teklif Yok";
 
+        const count = parseInt(stock.stock_count || stock.stok_sayısı || stock.stok || 0);
+        const buyPrice = parseFloat(stock.price || stock.fiyat || stock.alis_fiyati || 0);
+        const sellPrice = parseFloat(stock.sale_price || stock.satis_fiyati || 0);
+        
         if (!isAdmin && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
-        const count = parseInt(stock.stock_count || 0);
-        const buyPrice = parseFloat(stock.price || 0);
-        const sellPrice = parseFloat(stock.sale_price || 0);
-        const barcode = stock.barcode || "---";
-        const offerNotes = stock.offer_notes || "Teklif Yok";
-        
         const totalBuyRow = count * buyPrice;
         const totalSellRow = count * sellPrice;
 
@@ -102,14 +109,12 @@ function updateTablesByStatus(stocks, isAdmin) {
             defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
         }
 
-        // İŞLEMLER SÜTUNU: Admin ise stok yönetimi, Müşteri ise "Teklif Ver" butonu çıkacak
         const actionButtons = isAdmin ? `
             <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
             <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
         ` : `<button class="btn-customer-offer" onclick="customerSendOffer(${stock.id})">💬 Teklif Ver</button>`;
 
-        // TEKLİF SÜTUNU GÖRÜNÜMÜ
         const offerDisplay = isAdmin ? `
             <span id="offer-text-${stock.id}">${offerNotes}</span>
             <button class="btn-edit-offer" onclick="updateOfferInCloud(${stock.id})">✍️</button>
@@ -124,9 +129,9 @@ function updateTablesByStatus(stocks, isAdmin) {
 
         row.innerHTML = `
             <td style="font-family: monospace; color: #3498db;">${barcode}</td>
-            <td>${stock.brand_name}</td>
-            <td>${stock.model}</td>
-            <td>${stock.capacity_gb} GB</td>
+            <td>${brand}</td>
+            <td>${model}</td>
+            <td>${capacity} GB</td>
             <td><strong id="stock-count-${stock.id}">${count}</strong></td>
             <td style="color: #f1c40f; font-style: italic;">${offerDisplay}</td>
             ${adminCells}
@@ -167,29 +172,20 @@ function addCategoryTotalRow(tbody, totals) {
 }
 
 // ==========================================
-// 5. MÜŞTERİNİN KARŞI TEKLİF YAPMASI (PATCH) -> YENİ ÖZELLİK!
+// 5. MÜŞTERİNİN KARŞI TEKLİF YAPMASI (PATCH)
 // ==========================================
 window.customerSendOffer = async function(id) {
     const textElement = document.getElementById(`offer-text-${id}`);
     if (!textElement) return;
 
-    const customerOffer = prompt("Bu disk için alım/satım teklifinizi veya mesajınızı yazın (Örn: 1400 TL hemen alırım / İletişim no):");
-    
+    const customerOffer = prompt("Bu disk için teklifinizi girin (Örn: 1400 TL hemen alırım):");
     if (customerOffer === null || customerOffer.trim() === "") return;
 
-    // Mevcut notun üzerine ekleme yapıyoruz ki adminin eski yazdığı not silinmesin
     let currentText = textElement.innerText;
     if (currentText === "Teklif Yok") currentText = "";
 
-    const cleanOffer = customerOffer.trim();
-    // Notun sonuna ekle
-    const finalOffer = currentText ? `${currentText} | [Müşteri: ${cleanOffer}]` : `[Müşteri: ${cleanOffer}]`;
-    
-    // Ekranda anlık göster
+    const finalOffer = currentText ? `${currentText} | [Müşteri: ${customerOffer.trim()}]` : `[Müşteri: ${customerOffer.trim()}]`;
     textElement.innerText = finalOffer;
-
-    const match = globalStocks.find(s => s.id === id);
-    if (match) match.offer_notes = finalOffer;
 
     try {
         await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
@@ -200,11 +196,11 @@ window.customerSendOffer = async function(id) {
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal"
             },
-            body: JSON.stringify({ offer_notes: finalOffer })
+            body: JSON.stringify({ offer_notes: finalOffer, teklif_notu: finalOffer }) // İki ihtimali de güncelliyoruz
         });
         alert("Teklifiniz başarıyla Ahmet Usta'ya iletildi!");
     } catch (error) {
-        console.error("Müşteri teklifi gönderilemedi:", error);
+        console.error("Müşteri teklif hatası:", error);
     }
 }
 
@@ -216,15 +212,11 @@ window.updateOfferInCloud = async function(id) {
     if (!textElement) return;
 
     const currentOfferText = textElement.innerText;
-    const newOffer = prompt("Bu disk için ana teklif notunu tamamen güncelleyin (Müşteri notlarını temizlemek veya yeni fiyat yazmak için):", currentOfferText);
-    
+    const newOffer = prompt("Teklif notunu güncelleyin:", currentOfferText);
     if (newOffer === null) return; 
 
     const finalOffer = newOffer.trim() === "" ? "Teklif Yok" : newOffer.trim();
     textElement.innerText = finalOffer;
-
-    const match = globalStocks.find(s => s.id === id);
-    if (match) match.offer_notes = finalOffer;
 
     try {
         await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
@@ -235,10 +227,10 @@ window.updateOfferInCloud = async function(id) {
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal"
             },
-            body: JSON.stringify({ offer_notes: finalOffer })
+            body: JSON.stringify({ offer_notes: finalOffer, teklif_notu: finalOffer })
         });
     } catch (error) {
-        console.error("Teklif buluta işlenirken hata oluştu:", error);
+        console.error("Teklif güncelleme hatası:", error);
     }
 }
 
@@ -255,13 +247,6 @@ window.changeStockInCloud = async function(id, amount) {
 
     stockElement.innerText = newStock;
 
-    const match = globalStocks.find(s => s.id === id);
-    if (match) {
-        match.stock_count = newStock;
-        const urlParams = new URLSearchParams(window.location.search);
-        updateTablesByStatus(globalStocks, urlParams.get('mod') === 'ahmet');
-    }
-
     try {
         await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
             method: "PATCH",
@@ -271,10 +256,10 @@ window.changeStockInCloud = async function(id, amount) {
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal"
             },
-            body: JSON.stringify({ stock_count: newStock })
+            body: JSON.stringify({ stock_count: newStock, stok_sayısı: newStock, stok: newStock })
         });
     } catch (error) {
-        console.error("Güncelleme hatası:", error);
+        console.error("Stok adedi güncellenemedi:", error);
     }
 }
 
@@ -305,7 +290,9 @@ window.addNewStock = async function(event) {
             },
             body: JSON.stringify({
                 barcode: barcode,
+                barkod: barcode,
                 brand_name: brand,
+                marka_adı: brand,
                 model: model,
                 capacity_gb: capacity,
                 stock_count: stock,
@@ -322,7 +309,7 @@ window.addNewStock = async function(event) {
         const urlParams = new URLSearchParams(window.location.search);
         fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
     } catch (error) {
-        console.error("Ekleme hatası:", error);
+        console.error("Ürün eklenirken hata oluştu:", error);
     }
 }
 

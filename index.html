@@ -42,13 +42,124 @@
         <h2>Yeni Ürün Kaydı (İlk Ekleme)</h2>
         <form id="add-stock-form" onsubmit="addNewStock(event)">
             <div class="form-group">
-                <label>Barkod (Okuyucu ile okutabilirsin):</label>
+                <label>Barkod:</label>
                 <input type="text" id="prod-barcode" placeholder="Barkodu okutun veya yazın">
             </div>
             <div class="form-group">
-                <label>Marka:</label>
+                <label>Marka (brand_name veya marka_adı):</label>
                 <input type="text" id="prod-brand" required placeholder="Örn: Seagate">
             </div>
             <div class="form-group">
                 <label>Model:</label>
-                <input
+                <input type="text" id="prod-model" required placeholder="Örn: Barracuda HDD">
+            </div>
+            <div class="form-group">
+                <label>Kapasite (GB):</label>
+                <input type="number" id="prod-capacity" required placeholder="Örn: 1000">
+            </div>
+            <div class="form-group">
+                <label>Stok Adedi:</label>
+                <input type="number" id="prod-stock" required placeholder="Örn: 5">
+            </div>
+            <div class="form-group">
+                <label>Alış Birim Fiyatı (TL):</label>
+                <input type="number" id="prod-price" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>Satış Birim Fiyatı (TL):</label>
+                <input type="number" id="prod-sale-price" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>İlk Teklif / Durum Notu:</label>
+                <input type="text" id="prod-offer" placeholder="İlk teklif notunu yazın">
+            </div>
+            <div class="form-group">
+                <label>Disk Durumu:</label>
+                <select id="prod-status">
+                    <option value="Sağlıklı">Sağlıklı</option>
+                    <option value="Sağlığı Düşük">Sağlığı Düşük</option>
+                    <option value="Arızalı">Arızalı</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit">Ürünü Buluta Ekle</button>
+        </form>
+    </div>
+
+    <div id="container-healthy">
+        <h2 class="section-healthy">🟢 Sağlıklı Diskler ve Teklifler</h2>
+        <table id="table-healthy">
+            <thead>
+                <tr>
+                    <th>Barkod</th>
+                    <th>Marka</th>
+                    <th>Model</th>
+                    <th>Boyut</th>
+                    <th>Mevcut Stok</th>
+                    <th>Teklif / Durum Notu</th>
+                    <th class="admin-only">Alış Fiyatı</th>
+                    <th class="admin-only">Satış Fiyatı</th>
+                    <th class="admin-only">Toplam Alış</th>
+                    <th class="admin-only">Toplam Satış</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="container-low" style="display: none;">
+        <h2 class="section-low">🟡 Sağlığı Düşük Diskler</h2>
+        <table id="table-low">
+            <thead>
+                <tr>
+                    <th>Barkod</th>
+                    <th>Marka</th>
+                    <th>Model</th>
+                    <th>Boyut</th>
+                    <th>Mevcut Stok</th>
+                    <th>Teklif / Durum Notu</th>
+                    <th class="admin-only">Alış Fiyatı</th>
+                    <th class="admin-only">Satış Fiyatı</th>
+                    <th class="admin-only">Toplam Alış</th>
+                    <th class="admin-only">Toplam Satış</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="container-defective" style="display: none;">
+        <h2 class="section-defective">🔴 Arızalı Diskler</h2>
+        <table id="table-defective">
+            <thead>
+                <tr>
+                    <th>Barkod</th>
+                    <th>Marka</th>
+                    <th>Model</th>
+                    <th>Boyut</th>
+                    <th>Mevcut Stok</th>
+                    <th>Teklif / Durum Notu</th>
+                    <th class="admin-only">Alış Fiyatı</th>
+                    <th class="admin-only">Satış Fiyatı</th>
+                    <th class="admin-only">Toplam Alış</th>
+                    <th class="admin-only">Toplam Satış</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="grand-total-section" class="grand-total-box">
+        <div class="total-card card-buy">
+            📉 Toplam Stok Maliyeti (Alış): <br><span id="grand-buy-value" style="font-size: 22px; color: #3498db;">0.00</span> TL
+        </div>
+        <div class="total-card card-sell">
+            📈 Toplam Muhtemel Ciro (Satış): <br><span id="grand-sell-value" style="font-size: 22px; color: #2ecc71;">0.00</span> TL
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
