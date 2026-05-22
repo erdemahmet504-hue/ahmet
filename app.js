@@ -20,7 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem("erdem_bilisim_locked_role");
     }
 
-    // admin-panel kaldırıldı
+    const adminSection = document.getElementById("admin-panel");
+    if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
     const barcodeSaleSection = document.getElementById("barcode-sale-panel");
     if (barcodeSaleSection) barcodeSaleSection.style.display = isAdmin ? "block" : "none";
@@ -90,11 +91,10 @@ function updateTableHeadersDirect(isAdmin) {
         let headersHTML = "";
 
         if (isAdmin) {
-            // Admin ekranı tam bir profesyonel satın alım ve borsa ekranına dönüşüyor
             headersHTML = `
                 <th>Barkod / Tür</th>
                 <th>Marka</th>
-                <th>Boyut</th>
+                <th>Kapasite</th>
                 <th>İnç</th>
                 <th>Mevcut Stok</th>
                 <th style="color: #10b981;">Müşteri Alıcı Teklifi</th>
@@ -108,7 +108,7 @@ function updateTableHeadersDirect(isAdmin) {
             headersHTML = `
                 <th>Barkod</th>
                 <th>Marka</th>
-                <th>Boyut</th>
+                <th>Kapasite</th>
                 <th>İnç</th>
                 <th>Mevcut Stok</th>
                 <th style="color: #10b981;">Dükkan Satış Fiyatı</th>
@@ -221,9 +221,19 @@ function updateTablesByStatus(stocks, isAdmin) {
     stocks.forEach(stock => {
         const currentStatus = (stock.status || "Sağlıklı").trim();
         const brand = stock.brand_name || "---";
-        const capacity = stock.capacity_gb ? `${stock.capacity_gb} GB` : "---";
         const inch = stock.model || "---"; 
         const barcode = stock.barcode || "---";
+        
+        // Kapasiteyi TB veya GB olarak düzgün gösterme mantığı
+        let formattedCapacity = "---";
+        if (stock.capacity_gb) {
+            const cap = parseInt(stock.capacity_gb);
+            if (cap >= 1000) {
+                formattedCapacity = (cap / 1000) + " TB";
+            } else {
+                formattedCapacity = cap + " GB";
+            }
+        }
         
         const parsedOffers = parseOfferNotes(stock.offer_notes);
         const count = parseInt(stock.stock_count || 0);
@@ -234,7 +244,6 @@ function updateTablesByStatus(stocks, isAdmin) {
 
         const row = document.createElement("tr");
         
-        // Eğer dışarıdan bir satıcı arzıysa (Barkod "Müşteri Arzı") satırı görsel olarak farklı kılalım
         if (isAdmin && barcode === "Müşteri Arzı") {
             row.style.background = "rgba(249, 115, 22, 0.08)";
             row.style.borderLeft = "4px solid var(--orange)";
@@ -252,9 +261,6 @@ function updateTablesByStatus(stocks, isAdmin) {
         }
 
         if (isAdmin) {
-            // ==========================================
-            // AKILLI ADMİN SATIN ALIM VE ONAY GÖRÜNÜMÜ
-            // ==========================================
             const buyerNotice = parsedOffers.buyer !== "Yok" ? `<span style="background:#eab308; color:#000; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">YENİ</span>` : "";
             const sellerNotice = parsedOffers.seller !== "Yok" ? `<span style="background:#f97316; color:#fff; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">TEKLİF</span>` : "";
 
@@ -263,7 +269,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             row.innerHTML = `
                 <td>${barcodeDisplay}</td>
                 <td><strong>${brand}</strong></td>
-                <td>${capacity}</td>
+                <td>${formattedCapacity}</td>
                 <td><strong>${inch}"</strong></td>
                 <td>
                     <span id="stock-count-${stock.id}" style="font-size:15px; font-weight:bold;">${count}</span>
@@ -316,9 +322,6 @@ function updateTablesByStatus(stocks, isAdmin) {
             `;
 
         } else {
-            // ==========================================
-            // KÖRLENMİŞ MÜŞTERİ PANELİ GÖRÜNÜMÜ
-            // ==========================================
             let buyerCellHTML = "";
             let sellerCellHTML = "";
             let customerStatusCellHTML = ""; 
@@ -368,7 +371,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             row.innerHTML = `
                 <td style="font-family: monospace; color: #3498db;">${barcode}</td>
                 <td><strong>${brand}</strong></td>
-                <td>${capacity}</td>
+                <td>${formattedCapacity}</td>
                 <td><strong>${inch}"</strong></td>
                 <td><strong>${count}</strong></td>
                 ${buyerCellHTML}
@@ -417,7 +420,6 @@ window.showInlineInput = function(id, role) {
     if (editEl) editEl.style.display = "flex";
 }
 
-// Müşterilerin Yazılı Metin Alanı Girişleri (Teklifler İçin)
 window.submitInlineOffer = async function(id, role) {
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
@@ -456,7 +458,6 @@ window.submitInlineOffer = async function(id, role) {
     }
 }
 
-// ⚡ ADMİNİN DOĞRUDAN SAYISAL SATIN ALIM VEYA SATIŞ FİYATI VERME MOTORU
 window.submitDirectPrice = async function(id, type) {
     const inputVal = parseFloat(document.getElementById(`input-${type}-${id}`).value || 0);
     let updatePayload = {};
@@ -511,7 +512,7 @@ window.submitNewOfferFromSeller = async function(event) {
                 brand_name: brand,
                 capacity_gb: capacity,
                 model: inch, 
-                stock_count: 0, // Sen fiyatta anlaşıp stoğu artırana kadar sıfır kalır
+                stock_count: 0, 
                 price: 0,
                 sale_price: 0,
                 offer_notes: offerNotes,
@@ -647,7 +648,8 @@ window.barcodeSaleStockDrop = async function(event) {
         });
 
         if (response.ok) {
-            saveSaleToSessionLogs(scannedBarcode, matchedStock.brand_name, `${matchedStock.capacity_gb}GB ${matchedStock.model}"`, targetSession, parseFloat(matchedStock.sale_price || 0));
+            let capFormat = parseInt(matchedStock.capacity_gb) >= 1000 ? (parseInt(matchedStock.capacity_gb)/1000 + "TB") : (matchedStock.capacity_gb + "GB");
+            saveSaleToSessionLogs(scannedBarcode, matchedStock.brand_name, `${capFormat} ${matchedStock.model}"`, targetSession, parseFloat(matchedStock.sale_price || 0));
             barcodeInput.value = "";
             barcodeInput.focus();
             fetchStocksFromCloud(true);

@@ -230,13 +230,91 @@
         </div>
     </div>
 
+    <div id="admin-panel" style="display: none;">
+        <div class="admin-panel-block">
+            <h3>🆕 Yeni Ürün (Disk) Stoğu Tanımla</h3>
+            <form id="add-stock-form" onsubmit="addNewStock(event)">
+                <div class="form-grid">
+                    <input type="text" id="prod-barcode" placeholder="Barkod No" required>
+                    
+                    <select id="prod-brand" required>
+                        <option value="" disabled selected>Marka Seçiniz</option>
+                        <option value="Seagate">Seagate</option>
+                        <option value="WD">WD (Western Digital)</option>
+                        <option value="Toshiba">Toshiba</option>
+                        <option value="Samsung">Samsung</option>
+                        <option value="Kingston">Kingston</option>
+                        <option value="SanDisk">SanDisk</option>
+                        <option value="Kioxia">Kioxia</option>
+                        <option value="Crucial">Crucial</option>
+                        <option value="Diğer">Diğer</option>
+                    </select>
+
+                    <select id="prod-capacity" required>
+                        <option value="" disabled selected>Kapasite Seçiniz</option>
+                        <option value="120">120 GB</option>
+                        <option value="128">128 GB</option>
+                        <option value="240">240 GB</option>
+                        <option value="250">250 GB</option>
+                        <option value="256">256 GB</option>
+                        <option value="480">480 GB</option>
+                        <option value="500">500 GB</option>
+                        <option value="512">512 GB</option>
+                        <option value="1000">1 TB</option>
+                        <option value="2000">2 TB</option>
+                        <option value="4000">4 TB</option>
+                        <option value="8000">8 TB</option>
+                    </select>
+
+                    <input type="text" id="prod-inch" placeholder="Model/İnç (Örn: 2.5, M.2)" required>
+                    <input type="number" id="prod-stock" placeholder="Başlangıç Stoğu" required>
+                    <input type="number" step="0.01" id="prod-price" placeholder="Dükkan Alış Fiyatı (TL)">
+                    <input type="number" step="0.01" id="prod-sale-price" placeholder="Dükkan Satış Fiyatı (TL)">
+                    <select id="prod-status">
+                        <option value="Sağlıklı">Sağlıklı</option>
+                        <option value="Sağlığı Düşük">Sağlığı Düşük</option>
+                        <option value="Arızalı">Arızalı</option>
+                    </select>
+                    <button type="submit">➕ Stoğa Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="customer-seller-panel" class="admin-panel-block" style="display: none; border-color: var(--orange);">
         <h3 style="color: var(--orange);">📦 Dükkana Toplu Mal Arz Et / Fiyat Teklifi Al</h3>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Elinizdeki disk adetlerini ve detaylarını girin. Yönetici inceleyip size özel dükkan alış fiyatı sunacaktır.</p>
         <form id="customer-offer-form" onsubmit="submitNewOfferFromSeller(event)">
             <div class="form-grid">
-                <input type="text" id="offer-brand" placeholder="Marka" required>
-                <input type="number" id="offer-capacity" placeholder="Kapasite (GB)" required>
+                <select id="offer-brand" required>
+                    <option value="" disabled selected>Marka Seçiniz</option>
+                    <option value="Seagate">Seagate</option>
+                    <option value="WD">WD (Western Digital)</option>
+                    <option value="Toshiba">Toshiba</option>
+                    <option value="Samsung">Samsung</option>
+                    <option value="Kingston">Kingston</option>
+                    <option value="SanDisk">SanDisk</option>
+                    <option value="Kioxia">Kioxia</option>
+                    <option value="Crucial">Crucial</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+
+                <select id="offer-capacity" required>
+                    <option value="" disabled selected>Kapasite Seçiniz</option>
+                    <option value="120">120 GB</option>
+                    <option value="128">128 GB</option>
+                    <option value="240">240 GB</option>
+                    <option value="250">250 GB</option>
+                    <option value="256">256 GB</option>
+                    <option value="480">480 GB</option>
+                    <option value="500">500 GB</option>
+                    <option value="512">512 GB</option>
+                    <option value="1000">1 TB</option>
+                    <option value="2000">2 TB</option>
+                    <option value="4000">4 TB</option>
+                    <option value="8000">8 TB</option>
+                </select>
+
                 <input type="text" id="offer-inch" placeholder="İnç / Tür (Örn: 3.5, NVMe)" required>
                 <input type="number" id="offer-count" placeholder="Kaç Adet Var?" required>
                 <input type="text" id="offer-price" placeholder="Toplam İstenen Fiyat ve Telefonunuz" required>
