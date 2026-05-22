@@ -14,14 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod');
     const isAdmin = (mode === 'ahmet');
 
-    // Admin bölümlerini yönet
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
     const grandTotalSection = document.getElementById("grand-total-section");
     if (grandTotalSection) grandTotalSection.style.display = isAdmin ? "flex" : "none";
 
-    // KRİTİK: Admin değilse Sağlığı Düşük ve Arızalı konteynerlerini sayfadan tamamen kaldır/gizle
     const containerLow = document.getElementById("container-low");
     const containerDefective = document.getElementById("container-defective");
     
@@ -39,7 +37,6 @@ function setupAdminHeaders() {
     headers.forEach(id => {
         const row = document.getElementById(id);
         if (row) {
-            // "Teklif Notu" kolonunun (index 5) arkasına fiyat başlıklarını yerleştir
             const thBuyPrice = document.createElement("th");
             thBuyPrice.innerText = "Alış Fiyatı";
             const thSellPrice = document.createElement("th");
@@ -101,7 +98,6 @@ function updateTablesByStatus(stocks, isAdmin) {
     stocks.forEach(stock => {
         const currentStatus = (stock.status || "Sağlıklı").trim();
 
-        // Eğer admin değilsek ve ürün Sağlıklı değilse bu ürünü hiç işleme alma (Müşteriye tamamen gizle)
         if (!isAdmin && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
@@ -109,7 +105,7 @@ function updateTablesByStatus(stocks, isAdmin) {
         const buyPrice = parseFloat(stock.price || 0);
         const sellPrice = parseFloat(stock.sale_price || 0);
         const barcode = stock.barcode || "---";
-        const offerNotes = stock.offer_notes || "Not Yok";
+        const offerNotes = stock.offer_notes || "Teklif Yok";
         
         const totalBuyRow = count * buyPrice;
         const totalSellRow = count * sellPrice;
@@ -128,7 +124,12 @@ function updateTablesByStatus(stocks, isAdmin) {
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
         ` : `<span style="color: gray; font-size: 12px;">Yetki Yok</span>`;
 
-        // Fiyat sütunları sadece admin modunda dolacak
+        // Admin ise teklif hücresinin yanına canlı düzenleme kalemi ekliyoruz
+        const offerDisplay = isAdmin ? `
+            <span id="offer-text-${stock.id}">${offerNotes}</span>
+            <button class="btn-edit-offer" onclick="updateOfferInCloud(${stock.id})">✍️</button>
+        ` : `<span>${offerNotes}</span>`;
+
         const adminCells = isAdmin ? `
             <td>${buyPrice.toFixed(2)} TL</td>
             <td>${sellPrice.toFixed(2)} TL</td>
@@ -142,7 +143,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             <td>${stock.model}</td>
             <td>${stock.capacity_gb} GB</td>
             <td><strong id="stock-count-${stock.id}">${count}</strong></td>
-            <td style="color: #f1c40f; font-style: italic;">${offerNotes}</td>
+            <td style="color: #f1c40f; font-style: italic;">${offerDisplay}</td>
             ${adminCells}
             <td>${actionButtons}</td>
         `;
@@ -152,7 +153,6 @@ function updateTablesByStatus(stocks, isAdmin) {
         else if (currentStatus === "Arızalı" && defectiveBody) defectiveBody.appendChild(row);
     });
 
-    // Sadece admin paneli ise alt toplamları göster
     if (isAdmin) {
         addCategoryTotalRow(healthyBody, healthyTotals);
         addCategoryTotalRow(lowBody, lowTotals);
@@ -179,7 +179,44 @@ function addCategoryTotalRow(tbody, totals) {
 }
 
 // ==========================================
-// 5. BULUTTA STOK ADEDİ GÜNCELLEME (PATCH)
+// 5. SONRADAN TEKLİF NOTU GÜNCELLEME (PATCH) -> YENİ ÖZELLİK!
+// ==========================================
+window.updateOfferInCloud = async function(id) {
+    const currentOfferText = document.getElementById(`offer-text-${id}`).innerText;
+    
+    // Ekrana küçük bir girdi kutusu açıyoruz
+    const newOffer = prompt("Bu disk için alım/satım teklif veya durum notunu girin:", currentOfferText);
+    
+    // Eğer iptal tuşuna basmadıysa boş da olsa kaydetmesine izin verelim
+    if (newOffer === null) return; 
+
+    const finalOffer = newOffer.trim() === "" ? "Teklif Yok" : newOffer.trim();
+
+    // Sayfada anlık olarak metni değiştiriyoruz (Beklemesiz hissetmek için)
+    document.getElementById(`offer-text-${id}`).innerText = finalOffer;
+
+    // Yereldeki array'i de güncel tutalım
+    const match = globalStocks.find(s => s.id === id);
+    if (match) match.offer_notes = finalOffer;
+
+    try {
+        await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
+            method: "PATCH",
+            headers: {
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            },
+            body: JSON.stringify({ offer_notes: finalOffer })
+        });
+    } catch (error) {
+        console.error("Teklif güncelleme hatası:", error);
+    }
+}
+
+// ==========================================
+// 6. BULUTTA STOK ADEDİ GÜNCELLEME (PATCH)
 // ==========================================
 window.changeStockInCloud = async function(id, amount) {
     const stockElement = document.getElementById(`stock-count-${id}`);
@@ -215,7 +252,7 @@ window.changeStockInCloud = async function(id, amount) {
 }
 
 // ==========================================
-// 6. BULUTA YENİ HARD DİSK / TEKLİF EKLEME (POST)
+// 7. BULUTA YENİ HARD DİSK KAYDETME (POST)
 // ==========================================
 window.addNewStock = async function(event) {
     event.preventDefault();
@@ -227,7 +264,7 @@ window.addNewStock = async function(event) {
     const stock = parseInt(document.getElementById("prod-stock").value);
     const buyPrice = parseFloat(document.getElementById("prod-price").value || 0);
     const sellPrice = parseFloat(document.getElementById("prod-sale-price").value || 0);
-    const offerNotes = document.getElementById("prod-offer").value;
+    const offerNotes = document.getElementById("prod-offer").value || "Teklif Yok";
     const status = document.getElementById("prod-status").value;
 
     try {
@@ -237,7 +274,7 @@ window.addNewStock = async function(event) {
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
                 "Content-Type": "application/json",
-                "Prefer": "return=minimal"
+                "Prefer=return": "minimal"
             },
             body: JSON.stringify({
                 barcode: barcode,
@@ -253,7 +290,7 @@ window.addNewStock = async function(event) {
         });
 
         document.getElementById("add-stock-form").reset();
-        alert("Ürün, barkodu ve teklif notuyla birlikte başarıyla eklendi!");
+        alert("Ürün başarıyla veritabanına eklendi!");
         
         const urlParams = new URLSearchParams(window.location.search);
         fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
@@ -263,7 +300,7 @@ window.addNewStock = async function(event) {
 }
 
 // ==========================================
-// 7. BULUTTAN ÜRÜNÜ TAMAMEN SİLME (DELETE)
+// 8. BULUTTAN ÜRÜNÜ TAMAMEN SİLME (DELETE)
 // ==========================================
 window.deleteStockFromCloud = async function(id) {
     if (!confirm("Bu diski veritabanından tamamen silmek istediğine emin misin?")) return;
