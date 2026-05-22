@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const containerLow = document.getElementById("container-low");
     const containerDefective = document.getElementById("container-defective");
     
-    // Tablo başlıklarını admin/müşteri durumuna göre eksiksiz hazırlar
     updateTableHeadersDirect(isAdmin);
 
     if (isAdmin) {
@@ -45,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchStocksFromCloud(isAdmin);
 });
 
-// Adminde sütunların uçmasını engelleyen dinamik başlık fonksiyonu
 function updateTableHeadersDirect(isAdmin) {
     ["table-healthy", "table-low", "table-defective"].forEach(tableId => {
         const table = document.getElementById(tableId);
@@ -102,7 +100,6 @@ async function fetchStocksFromCloud(isAdmin) {
     }
 }
 
-// Teklif metnini parçalara ayıran yardımcı fonksiyon
 function parseOfferNotes(rawNotes) {
     let buyer = "Yok";
     let seller = "Yok";
@@ -275,17 +272,19 @@ window.customerSendOfferSplit = async function(id, role) {
 }
 
 // ==========================================
-// 6. ADMIN DOĞRUDAN ALICI VEYA SATICI SÜTUNUNU DÜZENLEME
+// 6. ADMIN DOĞRUDAN DÜZENLEME VE AKILLI ONAY SİSTEMİ
 // ==========================================
 window.adminEditOfferDirect = async function(id, role) {
     const stockItem = globalStocks.find(s => s.id === id);
-    const parsed = parseOfferNotes(stockItem ? stockItem.offer_notes : "");
+    if (!stockItem) return;
 
+    const parsed = parseOfferNotes(stockItem.offer_notes);
     let currentVal = (role === 'ALICI') ? parsed.buyer : parsed.seller;
     
     const newOffer = prompt(`${role} sütunundaki teklifi düzenleyin veya dükkan fiyatını girin:`, currentVal === "Yok" ? "" : currentVal);
     if (newOffer === null) return; 
 
+    // Yeni değeri atıyoruz
     if (role === 'ALICI') {
         parsed.buyer = newOffer.trim() === "" ? "Yok" : newOffer.trim();
     } else {
@@ -293,6 +292,33 @@ window.adminEditOfferDirect = async function(id, role) {
     }
 
     const finalOfferString = `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller}`;
+    
+    // Veritabanına gönderilecek güncel paket
+    let updatePayload = { offer_notes: finalOfferString };
+
+    // ⚡ AKILLI ONAY OTOMASYONU: Eğer bir fiyat girildiyse ve iptal edilmediyse
+    if (newOffer.trim() !== "") {
+        // Metin içerisindeki rakamı (Fiyatı) ayıklama (Örn: "1400 TL - 0532" içinden 1400'ü çeker)
+        const priceMatch = newOffer.match(/\d+(\.\d+)?/);
+        if (priceMatch) {
+            const extractedPrice = parseFloat(priceMatch[0]);
+            
+            // Eğer Alıcı Teklifi girildiyse -> Bu bizim dükkan için "Satış Fiyatımız" (sale_price) olur.
+            if (role === 'ALICI') {
+                const confirmSale = confirm(`💰 Alıcı teklifindeki ${extractedPrice} TL fiyatını doğrudan dükkanın "Satış Fiyatı" olarak onaylıyor musunuz?`);
+                if (confirmSale) {
+                    updatePayload.sale_price = extractedPrice;
+                }
+            } 
+            // Eğer Satıcı Teklifi girildiyse (Biri bize disk satıyorsa) -> Bu bizim dükkan için "Alış Maliyetimiz" (price) olur.
+            else if (role === 'SATICI') {
+                const confirmBuy = confirm(`📥 Satıcı teklifindeki ${extractedPrice} TL fiyatını doğrudan dükkanın "Alış Fiyatı (Maliyet)" olarak onaylıyor musunuz?`);
+                if (confirmBuy) {
+                    updatePayload.price = extractedPrice;
+                }
+            }
+        }
+    }
 
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
@@ -303,7 +329,7 @@ window.adminEditOfferDirect = async function(id, role) {
                 "Content-Type": "application/json",
                 "Prefer": "return=representation"
             },
-            body: JSON.stringify({ offer_notes: finalOfferString })
+            body: JSON.stringify(updatePayload)
         });
 
         if (response.ok) {
