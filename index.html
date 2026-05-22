@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erdem Bilişim - Canlı Stok ve Teklif Paneli</title>
+    <title>Erdem Bilişim - Canlı Stok ve Bölümlü Satış ERP Paneli</title>
     <style>
-        /* GENEL SİBER TEKSTÜR VE RENKLER */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #0d0e12; 
@@ -14,7 +13,7 @@
             padding: 30px;
         }
 
-        /* ERDEM BİLİŞİM ÖZEL LOGO ALANI */
+        /* LOGO ALANI */
         .brand-header {
             text-align: center;
             margin-bottom: 40px;
@@ -38,89 +37,82 @@
             justify-content: center;
             gap: 15px;
         }
-        .brand-logo span {
-            font-weight: 300;
-            color: #f1f5f9;
-            -webkit-text-fill-color: initial;
-        }
-        .brand-subtitle {
-            font-size: 14px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-top: 8px;
-        }
+        .brand-logo span { font-weight: 300; color: #f1f5f9; -webkit-text-fill-color: initial; }
+        .brand-subtitle { font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 4px; margin-top: 8px; }
 
-        /* PANEL VE KUTU TASARIMLARI */
         h2 { margin-top: 35px; padding-bottom: 8px; border-bottom: 2px solid #1e293b; font-size: 22px; }
-        .section-healthy { color: #10b981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
-        .section-low { color: #f59e0b; text-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
-        .section-defective { color: #ef4444; text-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+        .section-healthy { color: #10b981; }
+        .section-low { color: #f59e0b; }
+        .section-defective { color: #ef4444; }
 
         .admin-box { background-color: #111827; padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #1f2937; }
         .sales-box { background: linear-gradient(135deg, #2e1065 0%, #111827 100%); border: 1px solid #6b21a8; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(107, 33, 168, 0.2); }
+        .report-box { background-color: #0f172a; padding: 25px; border-radius: 12px; margin-top: 40px; border: 1px solid #334155; }
         
-        /* FORMLAR */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 6px; font-size: 14px; color: #94a3b8; font-weight: 500; }
-        .form-group input, .form-group select { padding: 10px; border-radius: 6px; width: 100%; max-width: 320px; background-color: #1f2937; color: white; border: 1px solid #374151; transition: all 0.2s; }
-        .form-group input:focus, .form-group select:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 8px rgba(99, 102, 241, 0.4); }
+        .form-group input, .form-group select { padding: 10px; border-radius: 6px; width: 100%; max-width: 320px; background-color: #1f2937; color: white; border: 1px solid #374151; }
+        .form-group input:focus, .form-group select:focus { border-color: #6366f1; outline: none; }
 
-        /* TABLOLAR */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background-color: #111827; border-radius: 8px; overflow: hidden; border: 1px solid #1f2937; }
         th, td { padding: 14px; text-align: left; border-bottom: 1px solid #1f2937; }
-        th { background-color: #1f2937; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+        th { background-color: #1f2937; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 12px; }
         tr:hover { background-color: #1e293b; }
 
-        /* BUTONLAR */
-        .btn-submit { background: linear-gradient(to right, #4f46e5, #6366f1); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
-        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
-        
-        .btn-barcode-sale { background: linear-gradient(to right, #7c3aed, #a855f7); color: white; border: none; padding: 11px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 10px; transition: all 0.2s; }
-        .btn-barcode-sale:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4); }
+        .btn-submit { background: linear-gradient(to right, #4f46e5, #6366f1); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-barcode-sale { background: linear-gradient(to right, #7c3aed, #a855f7); color: white; border: none; padding: 11px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 10px; }
 
-        .btn-action { padding: 6px 12px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; transition: all 0.1s; }
+        .btn-action { padding: 6px 12px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
         .btn-plus { background-color: #10b981; color: white; }
-        .btn-plus:hover { background-color: #059669; }
         .btn-minus { background-color: #f59e0b; color: black; }
-        .btn-minus:hover { background-color: #d97706; }
         .btn-delete { background-color: #ef4444; color: white; }
-        .btn-delete:hover { background-color: #dc2626; }
+        .btn-edit-offer { background-color: #4b5563; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; margin-left: 6px; }
         
-        .btn-edit-offer { background-color: #4b5563; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; margin-left: 6px; transition: background 0.2s; }
-        .btn-edit-offer:hover { background-color: #a855f7; }
+        .btn-buyer { background-color: #0284c7; color: white; padding: 8px 14px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; display: block; width: 130px; text-align: center; }
+        .btn-seller { background-color: #ea580c; color: white; padding: 8px 14px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; display: block; width: 130px; text-align: center; }
         
-        .btn-buyer { background-color: #0284c7; color: white; padding: 8px 14px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin-bottom: 6px; display: block; width: 130px; text-align: center; transition: all 0.2s; }
-        .btn-buyer:hover { background-color: #0369a1; transform: scale(1.02); }
-        .btn-seller { background-color: #ea580c; color: white; padding: 8px 14px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; display: block; width: 130px; text-align: center; transition: all 0.2s; }
-        .btn-seller:hover { background-color: #c2410c; transform: scale(1.02); }
-        
-        /* ÖZET KARTLARI */
         .total-row { background-color: #1f2937; font-weight: bold; }
         .grand-total-box { display: flex; gap: 20px; margin-top: 30px; display: none; }
-        .total-card { flex: 1; padding: 20px; border-radius: 12px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .total-card { flex: 1; padding: 20px; border-radius: 12px; font-size: 16px; font-weight: bold; }
         .card-buy { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border: 1px solid #2563eb; }
         .card-sell { background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%); border: 1px solid #059669; }
         
         .admin-only { display: none; }
+
+        /* SATIŞ SEKMELERİ STİLİ */
+        .sales-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .tab-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
     </style>
 </head>
 <body>
 
     <div class="brand-header">
         <div class="brand-logo">💻 ERDEM <span>BİLİŞİM</span></div>
-        <div class="brand-subtitle">Canlı Stok Takip & Teklif Otomasyon ERP Sistemi</div>
+        <div class="brand-subtitle">Canlı Stok Takip & Bölümlendirilmiş Satış ERP Sistemi</div>
     </div>
 
     <div id="barcode-sale-panel" class="sales-box" style="display: none;">
-        <h2 style="color: #c084fc; margin-top: 0;">⚡ Hızlı Barkod Okutarak Satış Yap (Stok Düş)</h2>
+        <h2 style="color: #c084fc; margin-top: 0;">⚡ Hızlı Barkod Okutarak Satış Bölümlerine Gönder</h2>
         <form id="barcode-sale-form" onsubmit="barcodeSaleStockDrop(event)">
-            <div class="form-group" style="display: flex; align-items: flex-end;">
-                <div>
-                    <label>Barkodu Okutun (Cihaz otomatik onaylar):</label>
-                    <input type="text" id="scan-barcode-input" placeholder="Barkod cihazı buraya yazar..." autocomplete="off" style="max-width: 400px; padding: 12px;">
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group">
+                    <label>Hedef Satış Bölümü Seçin:</label>
+                    <select id="active-sale-session" style="padding: 12px; background-color: #1e1b4b; border-color: #6366f1; font-weight: bold;">
+                        <option value="Satış 1">Satış 1 (Örn: İlk 100'lük Parti)</option>
+                        <option value="Satış 2">Satış 2</option>
+                        <option value="Satış 3">Satış 3</option>
+                        <option value="Satış 4">Satış 4</option>
+                        <option value="Satış 5">Satış 5</option>
+                    </select>
                 </div>
-                <button type="submit" class="btn-barcode-sale">Direkt Sattım</button>
+                <div class="form-group" style="flex: 1; max-width: 400px;">
+                    <label>Barkodu Okutun ve Enter'a Basın:</label>
+                    <input type="text" id="scan-barcode-input" placeholder="Barkod cihazı buraya yazar..." autocomplete="off" style="padding: 12px; max-width: 100%;">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-barcode-sale" style="height: 43px; margin: 0;">Direkt Seçili Bölüme Sat</button>
+                </div>
             </div>
         </form>
     </div>
@@ -175,22 +167,7 @@
     <div id="container-healthy">
         <h2 class="section-healthy">🟢 Sağlıklı Diskler ve Canlı Teklifler</h2>
         <table id="table-healthy">
-            <thead>
-                <tr>
-                    <th>Barkod</th>
-                    <th>Marka</th>
-                    <th>Model</th>
-                    <th>Boyut</th>
-                    <th>Mevcut Stok</th>
-                    <th style="color: #10b981;">Alıcı Teklifi</th>
-                    <th style="color: #f97316;">Satıcı Teklifi</th>
-                    <th class="admin-only">Alış Fiyatı</th>
-                    <th class="admin-only">Satış Fiyatı</th>
-                    <th class="admin-only">Toplam Alış</th>
-                    <th class="admin-only">Toplam Satış</th>
-                    <th>İşlemler</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Yükleniyor...</th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
@@ -198,22 +175,7 @@
     <div id="container-low" style="display: none;">
         <h2 class="section-low">🟡 Sağlığı Düşük Diskler (Sadece Admin)</h2>
         <table id="table-low">
-            <thead>
-                <tr>
-                    <th>Barkod</th>
-                    <th>Marka</th>
-                    <th>Model</th>
-                    <th>Boyut</th>
-                    <th>Mevcut Stok</th>
-                    <th style="color: #10b981;">Alıcı Teklifi</th>
-                    <th style="color: #f97316;">Satıcı Teklifi</th>
-                    <th class="admin-only">Alış Fiyatı</th>
-                    <th class="admin-only">Satış Fiyatı</th>
-                    <th class="admin-only">Toplam Alış</th>
-                    <th class="admin-only">Toplam Satış</th>
-                    <th>İşlemler</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Yükleniyor...</th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
@@ -221,22 +183,7 @@
     <div id="container-defective" style="display: none;">
         <h2 class="section-defective">🔴 Arızalı Diskler (Sadece Admin)</h2>
         <table id="table-defective">
-            <thead>
-                <tr>
-                    <th>Barkod</th>
-                    <th>Marka</th>
-                    <th>Model</th>
-                    <th>Boyut</th>
-                    <th>Mevcut Stok</th>
-                    <th style="color: #10b981;">Alıcı Teklifi</th>
-                    <th style="color: #f97316;">Satıcı Teklifi</th>
-                    <th class="admin-only">Alış Fiyatı</th>
-                    <th class="admin-only">Satış Fiyatı</th>
-                    <th class="admin-only">Toplam Alış</th>
-                    <th class="admin-only">Toplam Satış</th>
-                    <th>İşlemler</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Yükleniyor...</th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
@@ -248,6 +195,34 @@
         <div class="total-card card-sell">
             📈 Muhtemel Toplam Ciro (Satış): <br><span id="grand-sell-value" style="font-size: 26px; color: #34d399;">0.00</span> TL
         </div>
+    </div>
+
+    <div id="reports-panel" class="report-box" style="display: none;">
+        <h2 style="margin-top: 0; color: #38bdf8; border-bottom-color: #334155;">📊 Erdem Bilişim Bölümlendirilmiş Satış Raporları</h2>
+        
+        <div class="sales-tabs">
+            <button class="tab-btn active" onclick="switchReportTab('Satış 1')">Satış 1</button>
+            <button class="tab-btn" onclick="switchReportTab('Satış 2')">Satış 2</button>
+            <button class="tab-btn" onclick="switchReportTab('Satış 3')">Satış 3</button>
+            <button class="tab-btn" onclick="switchReportTab('Satış 4')">Satış 4</button>
+            <button class="tab-btn" onclick="switchReportTab('Satış 5')">Satış 5</button>
+        </div>
+
+        <table id="table-reports">
+            <thead>
+                <tr>
+                    <th>Barkod</th>
+                    <th>Marka / Model</th>
+                    <th>Satış Grubu</th>
+                    <th>Satılan Adet</th>
+                    <th>Birim Satış Fiyatı</th>
+                    <th style="color: #34d399;">Toplam Ciro</th>
+                </tr>
+            </thead>
+            <tbody id="reports-tbody">
+                <tr><td colspan="6" style="color: #64748b; text-align: center;">Bu gruba ait henüz satış yapılmadı.</td></tr>
+            </tbody>
+        </table>
     </div>
 
     <script src="app.js"></script>
