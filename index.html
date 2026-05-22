@@ -24,7 +24,10 @@
         .btn-minus { background-color: #ffc107; color: black; }
         .btn-delete { background-color: #dc3545; color: white; }
         .total-row { background-color: #252525; font-weight: bold; }
-        .grand-total-box { background-color: #1a252f; padding: 15px; border-radius: 8px; margin-top: 30px; border: 1px solid #34495e; font-size: 18px; font-weight: bold; display: none; }
+        .grand-total-box { display: flex; gap: 20px; margin-top: 30px; display: none; }
+        .total-card { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #34495e; font-size: 16px; font-weight: bold; }
+        .card-buy { background-color: #1a252f; border-color: #2980b9; }
+        .card-sell { background-color: #1e2b24; border-color: #27ae60; }
     </style>
 </head>
 <body>
@@ -32,7 +35,7 @@
     <h1>Disk Stok Takip Paneli</h1>
 
     <div id="admin-panel" class="admin-box" style="display: none;">
-        <h2>Yeni Ürün Ekle</h2>
+        <h2>Yeni Ürün Ekle (Alım / Satım)</h2>
         <form id="add-stock-form" onsubmit="addNewStock(event)">
             <div class="form-group">
                 <label>Marka:</label>
@@ -51,8 +54,12 @@
                 <input type="number" id="prod-stock" required placeholder="Örn: 5">
             </div>
             <div class="form-group">
-                <label>Birim Fiyatı (TL):</label>
-                <input type="number" id="prod-price" step="0.01" required placeholder="Örn: 1250.50">
+                <label>Alış Birim Fiyatı (TL):</label>
+                <input type="number" id="prod-price" step="0.01" required placeholder="Maliyet fiyatı">
+            </div>
+            <div class="form-group">
+                <label>Satış Birim Fiyatı (TL):</label>
+                <input type="number" id="prod-sale-price" step="0.01" required placeholder="Satış fiyatı">
             </div>
             <div class="form-group">
                 <label>Disk Durumu:</label>
@@ -109,7 +116,12 @@
     </table>
 
     <div id="grand-total-section" class="grand-total-box">
-        💰 Tüm Depo Toplam Değeri: <span id="grand-total-value">0.00</span> TL
+        <div class="total-card card-buy">
+            📉 Toplam Stok Maliyeti (Alış): <br><span id="grand-buy-value" style="font-size: 22px; color: #3498db;">0.00</span> TL
+        </div>
+        <div class="total-card card-sell">
+            📈 Toplam Muhtemel Ciro (Satış): <br><span id="grand-sell-value" style="font-size: 22px; color: #2ecc71;">0.00</span> TL
+        </div>
     </div>
 
     <script src="app.js"></script>

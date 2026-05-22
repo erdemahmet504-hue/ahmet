@@ -4,7 +4,7 @@
 const SUPABASE_URL = "https://zwayidssoujhrjxzgdql.supabase.co/rest/v1"; 
 const SUPABASE_KEY = "sb_publishable_wHYCLbDylFN9wnRXuGCmFg_cl1OPZAC"; 
 
-let globalStocks = []; // Fiyat anlık güncellenirken kullanacağız
+let globalStocks = [];
 
 // ==========================================
 // 2. ANA TETİKLEYİCİLER VE GİRİŞ KONTROLÜ
@@ -18,9 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
     const grandTotalSection = document.getElementById("grand-total-section");
-    if (grandTotalSection) grandTotalSection.style.display = isAdmin ? "block" : "none";
+    if (grandTotalSection) grandTotalSection.style.display = isAdmin ? "flex" : "none";
 
-    // Eğer admin ise tablolara Fiyat ve Toplam Fiyat sütun başlıklarını dinamik ekle
     if (isAdmin) {
         setupAdminHeaders();
     }
@@ -33,14 +32,19 @@ function setupAdminHeaders() {
     headers.forEach(id => {
         const row = document.getElementById(id);
         if (row) {
-            // "Mevcut Stok" kolonunun (index 3) arkasına yeni kolonları ekle
-            const thPrice = document.createElement("th");
-            thPrice.innerText = "Birim Fiyatı";
-            const thTotal = document.createElement("th");
-            thTotal.innerText = "Toplam Tutar";
+            const thBuyPrice = document.createElement("th");
+            thBuyPrice.innerText = "Alış Fiyatı";
+            const thSellPrice = document.createElement("th");
+            thSellPrice.innerText = "Satış Fiyatı";
+            const thTotalBuy = document.createElement("th");
+            thTotalBuy.innerText = "Toplam Alış";
+            const thTotalSell = document.createElement("th");
+            thTotalSell.innerText = "Toplam Satış";
             
-            row.insertBefore(thPrice, row.children[4]);
-            row.insertBefore(thTotal, row.children[5]);
+            row.insertBefore(thBuyPrice, row.children[4]);
+            row.insertBefore(thSellPrice, row.children[5]);
+            row.insertBefore(thTotalBuy, row.children[6]);
+            row.insertBefore(thTotalSell, row.children[7]);
         }
     });
 }
@@ -71,7 +75,7 @@ async function fetchStocksFromCloud(isAdmin) {
 }
 
 // ==========================================
-// 4. VERİLERİ DAĞITMA VE HESAPLAMA MOTORU
+// 4. VERİLERİ ALIM/SATIM MANTIĞINA GÖRE HESAPLAMA VE DAĞITMA
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -82,22 +86,28 @@ function updateTablesByStatus(stocks, isAdmin) {
     if (lowBody) lowBody.innerHTML = "";
     if (defectiveBody) defectiveBody.innerHTML = "";
 
-    // Kategori bazlı fiyat toplamları ve genel toplam değişkenleri
-    let sumHealthy = 0;
-    let sumLow = 0;
-    let sumDefective = 0;
+    // Kategori bazlı toplamlar
+    let healthyTotals = { buy: 0, sell: 0 };
+    let lowTotals = { buy: 0, sell: 0 };
+    let defectiveTotals = { buy: 0, sell: 0 };
 
     stocks.forEach(stock => {
         const row = document.createElement("tr");
         const count = parseInt(stock.stock_count || 0);
-        const price = parseFloat(stock.price || 0);
-        const rowTotal = count * price;
+        const buyPrice = parseFloat(stock.price || 0); // price = alış
+        const sellPrice = parseFloat(stock.sale_price || 0); // sale_price = satış
+        
+        const totalBuyRow = count * buyPrice;
+        const totalSellRow = count * sellPrice;
 
-        // Fiyat toplamlarını ait olduğu kategoriye ekle
         const currentStatus = (stock.status || "Sağlıklı").trim();
-        if (currentStatus === "Sağlıklı") sumHealthy += rowTotal;
-        else if (currentStatus === "Sağlığı Düşük") sumLow += rowTotal;
-        else if (currentStatus === "Arızalı") sumDefective += rowTotal;
+        if (currentStatus === "Sağlıklı") {
+            healthyTotals.buy += totalBuyRow; healthyTotals.sell += totalSellRow;
+        } else if (currentStatus === "Sağlığı Düşük") {
+            lowTotals.buy += totalBuyRow; lowTotals.sell += totalSellRow;
+        } else if (currentStatus === "Arızalı") {
+            defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
+        }
 
         const actionButtons = isAdmin ? `
             <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
@@ -105,10 +115,12 @@ function updateTablesByStatus(stocks, isAdmin) {
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
         ` : `<span style="color: gray; font-size: 12px;">Yetki Yok</span>`;
 
-        // Sadece admin ise fiyat sütun hücrelerini ekle
-        const priceCells = isAdmin ? `
-            <td>${price.toFixed(2)} TL</td>
-            <td><strong>${rowTotal.toFixed(2)} TL</strong></td>
+        // Sadece admin ise Alış-Satış detaylarını göster
+        const adminCells = isAdmin ? `
+            <td>${buyPrice.toFixed(2)} TL</td>
+            <td>${sellPrice.toFixed(2)} TL</td>
+            <td style="color: #3498db;">${totalBuyRow.toFixed(2)} TL</td>
+            <td style="color: #2ecc71;"><strong>${totalSellRow.toFixed(2)} TL</strong></td>
         ` : "";
 
         row.innerHTML = `
@@ -116,7 +128,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             <td>${stock.model}</td>
             <td>${stock.capacity_gb} GB</td>
             <td><strong id="stock-count-${stock.id}">${count}</strong></td>
-            ${priceCells}
+            ${adminCells}
             <td>${actionButtons}</td>
         `;
 
@@ -125,25 +137,28 @@ function updateTablesByStatus(stocks, isAdmin) {
         else if (currentStatus === "Arızalı" && defectiveBody) defectiveBody.appendChild(row);
     });
 
-    // Admin panelindeysek her tablonun en altına Kategori Toplam satırı ekle
     if (isAdmin) {
-        addCategoryTotalRow(healthyBody, sumHealthy);
-        addCategoryTotalRow(lowBody, sumLow);
-        addCategoryTotalRow(defectiveBody, sumDefective);
+        addCategoryTotalRow(healthyBody, healthyTotals);
+        addCategoryTotalRow(lowBody, lowTotals);
+        addCategoryTotalRow(defectiveBody, defectiveTotals);
 
-        // En alttaki dev genel toplam alanını güncelle
-        const grandTotal = sumHealthy + sumLow + sumDefective;
-        document.getElementById("grand-total-value").innerText = grandTotal.toFixed(2);
+        // Genel Muhasebe Kartlarını Güncelle
+        const grandBuy = healthyTotals.buy + lowTotals.buy + defectiveTotals.buy;
+        const grandSell = healthyTotals.sell + lowTotals.sell + defectiveTotals.sell;
+        
+        document.getElementById("grand-buy-value").innerText = grandBuy.toFixed(2);
+        document.getElementById("grand-sell-value").innerText = grandSell.toFixed(2);
     }
 }
 
-function addCategoryTotalRow(tbody, totalAmount) {
+function addCategoryTotalRow(tbody, totals) {
     if (!tbody) return;
     const row = document.createElement("tr");
     row.className = "total-row";
     row.innerHTML = `
-        <td colspan="4" style="text-align: right; color: #aaa;">Bu Kategorinin Toplam Değeri:</td>
-        <td colspan="2" style="color: #58d68d; font-size: 16px;">${totalAmount.toFixed(2)} TL</td>
+        <td colspan="4" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
+        <td colspan="2" style="color: #3498db;">Alış: ${totals.buy.toFixed(2)} TL</td>
+        <td colspan="2" style="color: #2ecc71;">Satış: ${totals.sell.toFixed(2)} TL</td>
     `;
     tbody.appendChild(row);
 }
@@ -161,7 +176,6 @@ window.changeStockInCloud = async function(id, amount) {
 
     stockElement.innerText = newStock;
 
-    // Yerel array'deki veriyi de anlık güncelleyelim ki toplamlar canlı değişsin
     const match = globalStocks.find(s => s.id === id);
     if (match) {
         match.stock_count = newStock;
@@ -195,7 +209,8 @@ window.addNewStock = async function(event) {
     const model = document.getElementById("prod-model").value;
     const capacity = parseInt(document.getElementById("prod-capacity").value);
     const stock = parseInt(document.getElementById("prod-stock").value);
-    const price = parseFloat(document.getElementById("prod-price").value || 0);
+    const buyPrice = parseFloat(document.getElementById("prod-price").value || 0);
+    const sellPrice = parseFloat(document.getElementById("prod-sale-price").value || 0);
     const status = document.getElementById("prod-status").value;
 
     try {
@@ -212,13 +227,14 @@ window.addNewStock = async function(event) {
                 model: model,
                 capacity_gb: capacity,
                 stock_count: stock,
-                price: price,
+                price: buyPrice,
+                sale_price: sellPrice,
                 status: status
             })
         });
 
         document.getElementById("add-stock-form").reset();
-        alert("Yeni ürün fiyatıyla birlikte eklendi!");
+        alert("Ürün alım/satım fiyatlarıyla başarıyla eklendi!");
         
         const urlParams = new URLSearchParams(window.location.search);
         fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
