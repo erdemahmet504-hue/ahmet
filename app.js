@@ -47,7 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll('.admin-only').forEach(el => {
             el.style.display = 'table-cell';
         });
-        renderSalesReport();
+        
+        // Dinamik rapor sekmelerini oluştur ve çizdir
+        renderReportTabs();
     } else {
         const savedRole = localStorage.getItem("erdem_bilisim_locked_role");
         if (savedRole) {
@@ -179,7 +181,6 @@ async function fetchStocksFromCloud(isAdmin) {
         if (Array.isArray(globalStocks)) {
             globalStocks.sort((a, b) => a.id - b.id);
             updateTablesByStatus(globalStocks, isAdmin);
-            if (isAdmin) renderSalesReport();
         }
     } catch (error) {
         console.error(error);
@@ -224,7 +225,6 @@ function updateTablesByStatus(stocks, isAdmin) {
         const inch = stock.model || "---"; 
         const barcode = stock.barcode || "---";
         
-        // Kapasiteyi TB veya GB olarak düzgün gösterme mantığı
         let formattedCapacity = "---";
         if (stock.capacity_gb) {
             const cap = parseInt(stock.capacity_gb);
@@ -618,15 +618,19 @@ window.deleteStockFromCloud = async function(id) {
     }
 }
 
+// ⚡ BARKOD OKUNDUĞUNDA ÇALIŞAN ANA SİSTEM ⚡
 window.barcodeSaleStockDrop = async function(event) {
     event.preventDefault();
     const barcodeInput = document.getElementById("scan-barcode-input");
-    const sessionSelect = document.getElementById("active-sale-session");
+    const sessionInput = document.getElementById("active-sale-session"); // Artık Text Input
     const scannedBarcode = barcodeInput.value.trim();
-    const targetSession = sessionSelect.value;
+    
+    // Satış oturumunun adını al (eğer boş bırakılırsa "Varsayılan Satış" yap)
+    const targetSession = sessionInput.value.trim() || "Varsayılan Satış";
     
     if (!scannedBarcode) return;
 
+    // Veritabanındaki stoklar listesinde bu barkodu ara
     const matchedStock = globalStocks.find(s => s.barcode && s.barcode.trim() === scannedBarcode);
     if (!matchedStock || parseInt(matchedStock.stock_count || 0) <= 0) {
         barcodeInput.value = "";
@@ -634,6 +638,7 @@ window.barcodeSaleStockDrop = async function(event) {
         return;
     }
 
+    // Stoktan 1 düşme işlemi
     let newStockCount = parseInt(matchedStock.stock_count) - 1;
 
     try {
@@ -648,11 +653,19 @@ window.barcodeSaleStockDrop = async function(event) {
         });
 
         if (response.ok) {
-            let capFormat = parseInt(matchedStock.capacity_gb) >= 1000 ? (parseInt(matchedStock.capacity_gb)/1000 + "TB") : (matchedStock.capacity_gb + "GB");
+            let capFormat = parseInt(matchedStock.capacity_gb) >= 1000 ? (parseInt(matchedStock.capacity_gb)/1000 + " TB") : (matchedStock.capacity_gb + " GB");
+            
+            // Satışı yerel hafızaya kaydet
             saveSaleToSessionLogs(scannedBarcode, matchedStock.brand_name, `${capFormat} ${matchedStock.model}"`, targetSession, parseFloat(matchedStock.sale_price || 0));
+            
             barcodeInput.value = "";
             barcodeInput.focus();
+            
+            // Ana tabloyu yenile
             fetchStocksFromCloud(true);
+            
+            // Sekmeleri ve raporu yenile
+            renderReportTabs(); 
         }
     } catch (error) {
         console.error(error);
@@ -677,13 +690,40 @@ function saveSaleToSessionLogs(barcode, brand, desc, sessionName, salePrice) {
     localStorage.setItem("erdem_bilisim_sales_logs", JSON.stringify(allSales));
 }
 
+// ⚡ DİNAMİK SEKMELERİ OLUŞTURAN MOTOR ⚡
+function renderReportTabs() {
+    const tabsContainer = document.getElementById("dynamic-report-tabs");
+    if (!tabsContainer) return;
+
+    let allSales = JSON.parse(localStorage.getItem("erdem_bilisim_sales_logs")) || [];
+    
+    // Geçmişteki satışlardan benzersiz oturum isimlerini (Satış 1, Gece vs) çıkar
+    let sessions = [...new Set(allSales.map(s => s.session))];
+
+    if (sessions.length === 0) {
+        sessions = ["Satış 1"]; // Hiç satış yoksa varsayılan
+    }
+
+    if (!sessions.includes(currentActiveReportTab)) {
+        currentActiveReportTab = sessions[0];
+    }
+
+    tabsContainer.innerHTML = "";
+    sessions.forEach(sessionName => {
+        const btn = document.createElement("button");
+        btn.className = `tab-btn ${sessionName === currentActiveReportTab ? "active" : ""}`;
+        btn.innerText = sessionName;
+        btn.onclick = () => switchReportTab(sessionName);
+        tabsContainer.appendChild(btn);
+    });
+    
+    // Tabloları da güncelle
+    renderSalesReport();
+}
+
 window.switchReportTab = function(sessionName) {
     currentActiveReportTab = sessionName;
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-        if (btn.innerText.trim() === sessionName) btn.classList.add("active");
-        else btn.classList.remove("active");
-    });
-    renderSalesReport();
+    renderReportTabs(); // Butonların aktifliğini ve tabloyu tazeler
 }
 
 function renderSalesReport() {
@@ -725,6 +765,16 @@ function renderSalesReport() {
         <td style="color: #34d399; font-size: 16px;">${totalSessionRevenue.toFixed(2)} TL</td>
     `;
     tbody.appendChild(totalTr);
+}
+
+// ⚡ GEÇMİŞİ TEMİZLEME BUTONU MOTORU ⚡
+window.clearSalesLogs = function() {
+    if(confirm("Tüm oturumların rapor geçmişi silinecek, emin misin abim? (Stoklar etkilenmez, sadece buradaki rapor sıfırlanır)")) {
+        localStorage.removeItem("erdem_bilisim_sales_logs");
+        currentActiveReportTab = "Satış 1";
+        document.getElementById("active-sale-session").value = "Satış 1";
+        renderReportTabs();
+    }
 }
 
 const style = document.createElement('style');
