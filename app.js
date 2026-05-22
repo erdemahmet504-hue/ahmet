@@ -16,7 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod'); 
     const isAdmin = (mode === 'ahmet');
 
-    // Eğer admin ise hafızadaki tüm müşteri rollerini sıfırla ki admin her şeyi görebilsin
     if (isAdmin) {
         localStorage.removeItem("erdem_bilisim_locked_role");
     }
@@ -50,15 +49,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         renderSalesReport();
     } else {
-        // 🔒 SAYFA YENİLENDİĞİNDE DEVREYE GİREN HAFIZA KİLİDİ
         const savedRole = localStorage.getItem("erdem_bilisim_locked_role");
         if (savedRole) {
             hasSelectedRole = true;
-            // Radyo butonunu hafızadaki seçime göre işaretle
             const radioToSelect = document.querySelector(`input[name="user-role-radio"][value="${savedRole}"]`);
             if (radioToSelect) radioToSelect.checked = true;
 
-            // Tikleri anında kilitle (F5 atsa bile açılamaz)
             const radios = document.querySelectorAll('input[name="user-role-radio"]');
             radios.forEach(radio => radio.disabled = true);
             if (roleSelector) {
@@ -66,7 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 roleSelector.style.pointerEvents = "none";
             }
 
-            // Seçilen panele göre form ekranlarını ayarla
             const sellerFormPanel = document.getElementById("customer-seller-panel");
             if (savedRole === "satici") {
                 if (containerLow) containerLow.style.display = "block";
@@ -78,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (sellerFormPanel) sellerFormPanel.style.display = "none";
             }
         } else {
-            // Eğer daha önce hiç rol seçmediyse default olarak alt tablolar kapalı başlasın
             if (containerLow) containerLow.style.display = "none";
             if (containerDefective) containerDefective.style.display = "none";
         }
@@ -94,22 +88,22 @@ function updateTableHeadersDirect(isAdmin) {
         const theadRow = table.querySelector("thead tr");
         if (!theadRow) return;
 
-        let headersHTML = `
-            <th>Barkod</th>
-            <th>Marka</th>
-            <th>Boyut</th>
-            <th>İnç</th>
-            <th>Mevcut Stok</th>
-            <th style="color: #10b981;">Alıcı Teklifi (Müşteri)</th>
-            <th style="color: #f97316;">Satıcı Teklifi (Müşteri)</th>
-        `;
+        let headersHTML = "";
 
         if (isAdmin) {
-            headersHTML += `
-                <th class="admin-only" style="display: table-cell;">Alış Fiyatı</th>
-                <th class="admin-only" style="display: table-cell;">Satış Fiyatı</th>
-                <th class="admin-only" style="display: table-cell;">Toplam Alış</th>
-                <th class="admin-only" style="display: table-cell;">Toplam Satış</th>
+            // Admin ekranı tam bir profesyonel satın alım ve borsa ekranına dönüşüyor
+            headersHTML = `
+                <th>Barkod / Tür</th>
+                <th>Marka</th>
+                <th>Boyut</th>
+                <th>İnç</th>
+                <th>Mevcut Stok</th>
+                <th style="color: #10b981;">Müşteri Alıcı Teklifi</th>
+                <th style="color: #f97316; background: rgba(249,115,22,0.1);">Gelen Satıcı Arzı (Adet & İstenen)</th>
+                <th style="color: #38bdf8;">Dükkan Alış Fiyatı (Senin Vereceğin)</th>
+                <th>Dükkan Satış Fiyatı</th>
+                <th>Toplam Maliyet</th>
+                <th>İşlemler</th>
             `;
         } else {
             headersHTML = `
@@ -121,22 +115,19 @@ function updateTableHeadersDirect(isAdmin) {
                 <th style="color: #10b981;">Dükkan Satış Fiyatı</th>
                 <th style="color: #f97316;">Dükkan Alış Fiyatı</th>
                 <th>Teklif Durumunuz</th>
+                <th>İşlemler</th>
             `;
         }
-
-        headersHTML += `<th>İşlemler</th>`;
         theadRow.innerHTML = headersHTML;
     });
 }
 
-// ⚡ ÜSTTEKİ ROL SEÇİMİ YAPILDIĞINDA TARAYICIYA KAZINAN KİLİT MOTORU
+// ⚡ ROL SEÇİM VE KİLİTLEME MOTORU
 window.handleRoleChange = function() {
     if (hasSelectedRole) return;
     hasSelectedRole = true;
 
     const currentRole = getSelectedCustomerRole();
-    
-    // 🔒 Seçilen rolü tarayıcı hafızasına alıyoruz (F5 koruması)
     localStorage.setItem("erdem_bilisim_locked_role", currentRole);
 
     const radios = document.querySelectorAll('input[name="user-role-radio"]');
@@ -211,7 +202,7 @@ function parseOfferNotes(rawNotes) {
 }
 
 // ==========================================
-// 4. TABLO MOTORU VE KÖRLENMİŞ TİCARİ KİLİT SİSTEMİ
+// 4. ANA TABLO YENİLEME VE SATIN ALIM EKRANI MANTIĞI
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -243,6 +234,13 @@ function updateTablesByStatus(stocks, isAdmin) {
         if (!isAdmin && currentRole !== "satici" && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
+        
+        // Eğer dışarıdan bir satıcı arzıysa (Barkod "Müşteri Arzı") satırı görsel olarak farklı kılalım
+        if (isAdmin && barcode === "Müşteri Arzı") {
+            row.style.background = "rgba(249, 115, 22, 0.08)";
+            row.style.borderLeft = "4px solid var(--orange)";
+        }
+
         const totalBuyRow = count * buyPrice;
         const totalSellRow = count * sellPrice;
 
@@ -254,16 +252,24 @@ function updateTablesByStatus(stocks, isAdmin) {
             defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
         }
 
-        let buyerCellHTML = "";
-        let sellerCellHTML = "";
-        let customerStatusCellHTML = ""; 
-        let actionButtons = "";
-
         if (isAdmin) {
+            // ==========================================
+            // AKILLI ADMİN SATIN ALIM VE ONAY GÖRÜNÜMÜ
+            // ==========================================
             const buyerNotice = parsedOffers.buyer !== "Yok" ? `<span style="background:#eab308; color:#000; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">YENİ</span>` : "";
-            const sellerNotice = parsedOffers.seller !== "Yok" ? `<span style="background:#eab308; color:#000; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">YENİ</span>` : "";
+            const sellerNotice = parsedOffers.seller !== "Yok" ? `<span style="background:#f97316; color:#fff; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">TEKLİF</span>` : "";
 
-            buyerCellHTML = `
+            let barcodeDisplay = barcode === "Müşteri Arzı" ? `<span style="color:#f97316; font-weight:bold;">DIŞ ARZ</span>` : `<span style="font-family:monospace; color:#3498db;">${barcode}</span>`;
+
+            row.innerHTML = `
+                <td>${barcodeDisplay}</td>
+                <td><strong>${brand}</strong></td>
+                <td>${capacity}</td>
+                <td><strong>${inch}"</strong></td>
+                <td>
+                    <span id="stock-count-${stock.id}" style="font-size:15px; font-weight:bold;">${count}</span>
+                </td>
+                
                 <td style="color: #10b981;">
                     <div id="display-ALICI-${stock.id}">
                         ${buyerNotice}<span>${parsedOffers.buyer}</span>
@@ -273,30 +279,55 @@ function updateTablesByStatus(stocks, isAdmin) {
                         <input type="text" id="input-ALICI-${stock.id}" value="${parsedOffers.buyer === "Yok" ? "" : parsedOffers.buyer}" style="width:100px; background:#222; color:#fff; border:1px solid #444;">
                         <button onclick="submitInlineOffer(${stock.id}, 'ALICI')" style="background:#10b981; color:white; border:none; padding:3px 6px; border-radius:3px;">✔️</button>
                     </div>
-                </td>`;
+                </td>
 
-            sellerCellHTML = `
-                <td style="color: #f97316;">
-                    <div id="display-SATICI-${stock.id}">
-                        ${sellerNotice}<span>${parsedOffers.seller}</span>
-                        <button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'SATICI')">✍️ Onayla</button>
-                    </div>
-                    <div id="edit-SATICI-${stock.id}" style="display:none; gap:5px;">
-                        <input type="text" id="input-SATICI-${stock.id}" value="${parsedOffers.seller === "Yok" ? "" : parsedOffers.seller}" style="width:100px; background:#222; color:#fff; border:1px solid #444;">
-                        <button onclick="submitInlineOffer(${stock.id}, 'SATICI')" style="background:#10b981; color:white; border:none; padding:3px 6px; border-radius:3px;">✔️</button>
-                    </div>
-                </td>`;
+                <td style="color: #f97316; font-weight: 500; background: rgba(249,115,22,0.03);">
+                    ${sellerNotice}<span>${parsedOffers.seller}</span>
+                </td>
 
-            actionButtons = `
+                <td style="color: #38bdf8;">
+                    <div id="display-ALIS-${stock.id}">
+                        <strong>${buyPrice.toFixed(2)} TL</strong>
+                        <button class="btn-edit-offer" style="background:#0284c7;" onclick="showInlineInput(${stock.id}, 'ALIS')">💰 Fiyat Ver</button>
+                    </div>
+                    <div id="edit-ALIS-${stock.id}" style="display:none; gap:5px;">
+                        <input type="number" step="0.01" id="input-ALIS-${stock.id}" value="${buyPrice}" style="width:90px; background:#222; color:#fff; border:1px solid #38bdf8; padding:2px;">
+                        <button onclick="submitDirectPrice(${stock.id}, 'ALIS')" style="background:#38bdf8; color:black; border:none; padding:3px 6px; border-radius:3px; font-weight:bold;">✔️</button>
+                    </div>
+                </td>
+
+                <td style="color: #10b981;">
+                    <div id="display-SATIS-${stock.id}">
+                        <strong>${sellPrice.toFixed(2)} TL</strong>
+                        <button class="btn-edit-offer" style="background:#059669;" onclick="showInlineInput(${stock.id}, 'SATIS')">✍️ Değiş</button>
+                    </div>
+                    <div id="edit-SATIS-${stock.id}" style="display:none; gap:5px;">
+                        <input type="number" step="0.01" id="input-SATIS-${stock.id}" value="${sellPrice}" style="width:90px; background:#222; color:#fff; border:1px solid #10b981; padding:2px;">
+                        <button onclick="submitDirectPrice(${stock.id}, 'SATIS')" style="background:#10b981; color:white; border:none; padding:3px 6px; border-radius:3px;">✔️</button>
+                    </div>
+                </td>
+
+                <td style="color: #94a3b8;">${totalBuyRow.toFixed(2)} TL</td>
+
                 <td>
                     <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
                     <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
                     <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
-                </td>`;
+                </td>
+            `;
+
         } else {
+            // ==========================================
+            // KÖRLENMİŞ MÜŞTERİ PANELİ GÖRÜNÜMÜ
+            // ==========================================
+            let buyerCellHTML = "";
+            let sellerCellHTML = "";
+            let customerStatusCellHTML = ""; 
+            let actionButtons = "";
+
             if (currentRole === "alici") {
                 buyerCellHTML = `<td style="color: #10b981; font-size:15px;"><strong>${sellPrice.toFixed(2)} TL</strong></td>`;
-                sellerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli Bölüm</td>`;
+                sellerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli</td>`;
                 customerStatusCellHTML = `<td style="color:#10b981; font-size:12px;">Mevcut Teklifiniz: <br><strong>${parsedOffers.buyer}</strong></td>`;
                 
                 actionButtons = `
@@ -310,16 +341,15 @@ function updateTablesByStatus(stocks, isAdmin) {
                         </div>
                     </td>`;
             } else {
-                buyerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli Bölüm</td>`;
+                buyerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli</td>`;
                 sellerCellHTML = `<td style="color: #f97316; font-size:15px;"><strong>${buyPrice.toFixed(2)} TL</strong></td>`;
                 customerStatusCellHTML = `<td style="color:#f97316; font-size:12px;">Dükkana Arzınız: <br><strong>${parsedOffers.seller}</strong></td>`;
 
-                // ⚡ SATICI KENDİ YARATTIĞI TEKLİFİ SİLEBİLSİN (Dükkanın ana malını silemez!)
                 if (barcode === "Müşteri Arzı") {
                     actionButtons = `
                         <td>
                             <div id="display-SATICI-${stock.id}">
-                                <button class="btn-delete" style="padding:6px 12px; font-size:12px;" onclick="deleteStockFromCloud(${stock.id})">❌ Teklifi İptal Et/Sil</button>
+                                <button class="btn-delete" style="padding:6px 12px; font-size:12px;" onclick="deleteStockFromCloud(${stock.id})">❌ Teklifi İptal Et</button>
                             </div>
                         </td>`;
                 } else {
@@ -335,27 +365,19 @@ function updateTablesByStatus(stocks, isAdmin) {
                         </td>`;
                 }
             }
+
+            row.innerHTML = `
+                <td style="font-family: monospace; color: #3498db;">${barcode}</td>
+                <td><strong>${brand}</strong></td>
+                <td>${capacity}</td>
+                <td><strong>${inch}"</strong></td>
+                <td><strong>${count}</strong></td>
+                ${buyerCellHTML}
+                ${sellerCellHTML}
+                ${customerStatusCellHTML}
+                ${actionButtons}
+            `;
         }
-
-        const adminCells = isAdmin ? `
-            <td class="admin-only" style="display: table-cell;">${buyPrice.toFixed(2)} TL</td>
-            <td class="admin-only" style="display: table-cell;">${sellPrice.toFixed(2)} TL</td>
-            <td class="admin-only" style="display: table-cell; color: #3498db;">${totalBuyRow.toFixed(2)} TL</td>
-            <td class="admin-only" style="display: table-cell; color: #10b981;"><strong>${totalSellRow.toFixed(2)} TL</strong></td>
-        ` : "";
-
-        row.innerHTML = `
-            <td style="font-family: monospace; color: #3498db;">${barcode}</td>
-            <td>${brand}</td>
-            <td>${capacity}</td>
-            <td><strong>${inch}"</strong></td>
-            <td><strong>${count}</strong></td>
-            ${buyerCellHTML}
-            ${sellerCellHTML}
-            ${!isAdmin ? customerStatusCellHTML : ""}
-            ${adminCells}
-            ${actionButtons}
-        `;
 
         if (currentStatus === "Sağlıklı" && healthyBody) healthyBody.appendChild(row);
         else if (currentStatus === "Sağlığı Düşük" && lowBody) lowBody.appendChild(row);
@@ -382,10 +404,9 @@ function addCategoryTotalRow(tbody, totals) {
     const row = document.createElement("tr");
     row.className = "total-row";
     row.innerHTML = `
-        <td colspan="7" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
-        <td style="color: #3498db;">Alış: ${totals.buy.toFixed(2)} TL</td>
-        <td style="color: #10b981;">Satış: ${totals.sell.toFixed(2)} TL</td>
-        <td></td>
+        <td colspan="5" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
+        <td style="color: #3498db;" colspan="2">Alış Maliyeti: ${totals.buy.toFixed(2)} TL</td>
+        <td style="color: #10b981;" colspan="4">Beklenen Ciro: ${totals.sell.toFixed(2)} TL</td>
     `;
     tbody.appendChild(row);
 }
@@ -397,6 +418,7 @@ window.showInlineInput = function(id, role) {
     if (editEl) editEl.style.display = "flex";
 }
 
+// Müşterilerin Yazılı Metin Alanı Girişleri (Teklifler İçin)
 window.submitInlineOffer = async function(id, role) {
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
@@ -416,16 +438,34 @@ window.submitInlineOffer = async function(id, role) {
     const finalOfferString = `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller}`;
     let updatePayload = { offer_notes: finalOfferString };
 
-    if (isAdmin && inputVal !== "") {
-        const priceMatch = inputVal.match(/\d+(\.\d+)?/);
-        if (priceMatch) {
-            const extractedPrice = parseFloat(priceMatch[0]);
-            if (role === 'ALICI') {
-                updatePayload.sale_price = extractedPrice;
-            } else if (role === 'SATICI') {
-                updatePayload.price = extractedPrice;
-            }
+    try {
+        const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
+            method: "PATCH",
+            headers: {
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(updatePayload)
+        });
+
+        if (response.ok) {
+            fetchStocksFromCloud(isAdmin);
         }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// ⚡ ADMİNİN DOĞRUDAN SAYISAL SATIN ALIM VEYA SATIŞ FİYATI VERME MOTORU
+window.submitDirectPrice = async function(id, type) {
+    const inputVal = parseFloat(document.getElementById(`input-${type}-${id}`).value || 0);
+    let updatePayload = {};
+
+    if (type === 'ALIS') {
+        updatePayload.price = inputVal;
+    } else if (type === 'SATIS') {
+        updatePayload.sale_price = inputVal;
     }
 
     try {
@@ -440,7 +480,7 @@ window.submitInlineOffer = async function(id, role) {
         });
 
         if (response.ok) {
-            fetchStocksFromCloud(isAdmin);
+            fetchStocksFromCloud(true);
         }
     } catch (error) {
         console.error(error);
@@ -472,7 +512,7 @@ window.submitNewOfferFromSeller = async function(event) {
                 brand_name: brand,
                 capacity_gb: capacity,
                 model: inch, 
-                stock_count: 0, 
+                stock_count: 0, // Sen fiyatta anlaşıp stoğu artırana kadar sıfır kalır
                 price: 0,
                 sale_price: 0,
                 offer_notes: offerNotes,
