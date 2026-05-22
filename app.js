@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod');
     const isAdmin = (mode === 'ahmet');
 
+    // Panellerin görünürlüğünü ayarla
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
@@ -27,6 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (containerLow) containerLow.style.display = "block";
         if (containerDefective) containerDefective.style.display = "block";
         setupAdminHeaders();
+    } else {
+        // Müşteri modundaysak ne olur ne olmaz diye sıfırla
+        if (containerLow) containerLow.style.display = "none";
+        if (containerDefective) containerDefective.style.display = "none";
     }
 
     fetchStocksFromCloud(isAdmin);
@@ -36,7 +41,7 @@ function setupAdminHeaders() {
     const headers = ["header-healthy", "header-low", "header-defective"];
     headers.forEach(id => {
         const row = document.getElementById(id);
-        if (row) {
+        if (row && row.children.length === 7) { // Başlıkların mükerrer eklenmesini önlemek için kontrol
             const thBuyPrice = document.createElement("th");
             thBuyPrice.innerText = "Alış Fiyatı";
             const thSellPrice = document.createElement("th");
@@ -46,6 +51,7 @@ function setupAdminHeaders() {
             const thTotalSell = document.createElement("th");
             thTotalSell.innerText = "Toplam Satış";
             
+            // Kolonları "Teklif / Durum Notu" başlığından (index 5) sonraya, "İşlemler"den önceye ekle
             row.insertBefore(thBuyPrice, row.children[6]);
             row.insertBefore(thSellPrice, row.children[7]);
             row.insertBefore(thTotalBuy, row.children[8]);
@@ -80,7 +86,7 @@ async function fetchStocksFromCloud(isAdmin) {
 }
 
 // ==========================================
-// 4. VERİLERİ HESAPLAMA VE DAĞITMA MOTORU
+// 4. VERİLERİ HESAPLAMA VE TABLOLARA BASMA MOTORU
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -98,6 +104,7 @@ function updateTablesByStatus(stocks, isAdmin) {
     stocks.forEach(stock => {
         const currentStatus = (stock.status || "Sağlıklı").trim();
 
+        // KRİTİK FİLTRE: Eğer admin değilsek ve ürün Sağlıklı değilse listeye hiç alma
         if (!isAdmin && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
@@ -122,9 +129,9 @@ function updateTablesByStatus(stocks, isAdmin) {
             <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
             <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
-        ` : `<span style="color: gray; font-size: 12px;">Yetki Yok</span>`;
+        ` : `<span style="color: gray; font-size: 12px;">Müşteri Modu</span>`;
 
-        // Admin ise teklif hücresinin yanına canlı düzenleme kalemi ekliyoruz
+        // Admin ise teklif hücresinin yanına düzenleme butonu fırlat
         const offerDisplay = isAdmin ? `
             <span id="offer-text-${stock.id}">${offerNotes}</span>
             <button class="btn-edit-offer" onclick="updateOfferInCloud(${stock.id})">✍️</button>
@@ -161,8 +168,10 @@ function updateTablesByStatus(stocks, isAdmin) {
         const grandBuy = healthyTotals.buy + lowTotals.buy + defectiveTotals.buy;
         const grandSell = healthyTotals.sell + lowTotals.sell + defectiveTotals.sell;
         
-        document.getElementById("grand-buy-value").innerText = grandBuy.toFixed(2);
-        document.getElementById("grand-sell-value").innerText = grandSell.toFixed(2);
+        const gBuyEl = document.getElementById("grand-buy-value");
+        const gSellEl = document.getElementById("grand-sell-value");
+        if (gBuyEl) gBuyEl.innerText = grandBuy.toFixed(2);
+        if (gSellEl) gSellEl.innerText = grandSell.toFixed(2);
     }
 }
 
@@ -179,23 +188,20 @@ function addCategoryTotalRow(tbody, totals) {
 }
 
 // ==========================================
-// 5. SONRADAN TEKLİF NOTU GÜNCELLEME (PATCH) -> YENİ ÖZELLİK!
+// 5. LİSTEDEN ANLIK TEKLİF GÜNCELLEME (PATCH)
 // ==========================================
 window.updateOfferInCloud = async function(id) {
-    const currentOfferText = document.getElementById(`offer-text-${id}`).innerText;
+    const textElement = document.getElementById(`offer-text-${id}`);
+    if (!textElement) return;
+
+    const currentOfferText = textElement.innerText;
+    const newOffer = prompt("Bu disk için güncel alım/satım teklifini veya durum notunu girin:", currentOfferText);
     
-    // Ekrana küçük bir girdi kutusu açıyoruz
-    const newOffer = prompt("Bu disk için alım/satım teklif veya durum notunu girin:", currentOfferText);
-    
-    // Eğer iptal tuşuna basmadıysa boş da olsa kaydetmesine izin verelim
-    if (newOffer === null) return; 
+    if (newOffer === null) return; // İptale bastıysa çık
 
     const finalOffer = newOffer.trim() === "" ? "Teklif Yok" : newOffer.trim();
+    textElement.innerText = finalOffer;
 
-    // Sayfada anlık olarak metni değiştiriyoruz (Beklemesiz hissetmek için)
-    document.getElementById(`offer-text-${id}`).innerText = finalOffer;
-
-    // Yereldeki array'i de güncel tutalım
     const match = globalStocks.find(s => s.id === id);
     if (match) match.offer_notes = finalOffer;
 
@@ -211,7 +217,7 @@ window.updateOfferInCloud = async function(id) {
             body: JSON.stringify({ offer_notes: finalOffer })
         });
     } catch (error) {
-        console.error("Teklif güncelleme hatası:", error);
+        console.error("Teklif buluta işlenirken hata oluştu:", error);
     }
 }
 
@@ -274,7 +280,7 @@ window.addNewStock = async function(event) {
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
                 "Content-Type": "application/json",
-                "Prefer=return": "minimal"
+                "Prefer": "return=minimal"
             },
             body: JSON.stringify({
                 barcode: barcode,
