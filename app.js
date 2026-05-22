@@ -7,20 +7,27 @@ const SUPABASE_KEY = "sb_publishable_wHYCLbDylFN9wnRXuGCmFg_cl1OPZAC";
 let globalStocks = [];
 
 // ==========================================
-// 2. ANA TETİKLEYİCİLER VE GİRİŞ KONTROLÜ
+// 2. ANA TETİKLEYİCİLER VE YETKİ KONTROLÜ
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mod');
     const isAdmin = (mode === 'ahmet');
 
+    // Admin bölümlerini yönet
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
     const grandTotalSection = document.getElementById("grand-total-section");
     if (grandTotalSection) grandTotalSection.style.display = isAdmin ? "flex" : "none";
 
+    // KRİTİK: Admin değilse Sağlığı Düşük ve Arızalı konteynerlerini sayfadan tamamen kaldır/gizle
+    const containerLow = document.getElementById("container-low");
+    const containerDefective = document.getElementById("container-defective");
+    
     if (isAdmin) {
+        if (containerLow) containerLow.style.display = "block";
+        if (containerDefective) containerDefective.style.display = "block";
         setupAdminHeaders();
     }
 
@@ -32,6 +39,7 @@ function setupAdminHeaders() {
     headers.forEach(id => {
         const row = document.getElementById(id);
         if (row) {
+            // "Teklif Notu" kolonunun (index 5) arkasına fiyat başlıklarını yerleştir
             const thBuyPrice = document.createElement("th");
             thBuyPrice.innerText = "Alış Fiyatı";
             const thSellPrice = document.createElement("th");
@@ -41,10 +49,10 @@ function setupAdminHeaders() {
             const thTotalSell = document.createElement("th");
             thTotalSell.innerText = "Toplam Satış";
             
-            row.insertBefore(thBuyPrice, row.children[4]);
-            row.insertBefore(thSellPrice, row.children[5]);
-            row.insertBefore(thTotalBuy, row.children[6]);
-            row.insertBefore(thTotalSell, row.children[7]);
+            row.insertBefore(thBuyPrice, row.children[6]);
+            row.insertBefore(thSellPrice, row.children[7]);
+            row.insertBefore(thTotalBuy, row.children[8]);
+            row.insertBefore(thTotalSell, row.children[9]);
         }
     });
 }
@@ -75,7 +83,7 @@ async function fetchStocksFromCloud(isAdmin) {
 }
 
 // ==========================================
-// 4. VERİLERİ ALIM/SATIM MANTIĞINA GÖRE HESAPLAMA VE DAĞITMA
+// 4. VERİLERİ HESAPLAMA VE DAĞITMA MOTORU
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -86,21 +94,26 @@ function updateTablesByStatus(stocks, isAdmin) {
     if (lowBody) lowBody.innerHTML = "";
     if (defectiveBody) defectiveBody.innerHTML = "";
 
-    // Kategori bazlı toplamlar
     let healthyTotals = { buy: 0, sell: 0 };
     let lowTotals = { buy: 0, sell: 0 };
     let defectiveTotals = { buy: 0, sell: 0 };
 
     stocks.forEach(stock => {
+        const currentStatus = (stock.status || "Sağlıklı").trim();
+
+        // Eğer admin değilsek ve ürün Sağlıklı değilse bu ürünü hiç işleme alma (Müşteriye tamamen gizle)
+        if (!isAdmin && currentStatus !== "Sağlıklı") return;
+
         const row = document.createElement("tr");
         const count = parseInt(stock.stock_count || 0);
-        const buyPrice = parseFloat(stock.price || 0); // price = alış
-        const sellPrice = parseFloat(stock.sale_price || 0); // sale_price = satış
+        const buyPrice = parseFloat(stock.price || 0);
+        const sellPrice = parseFloat(stock.sale_price || 0);
+        const barcode = stock.barcode || "---";
+        const offerNotes = stock.offer_notes || "Not Yok";
         
         const totalBuyRow = count * buyPrice;
         const totalSellRow = count * sellPrice;
 
-        const currentStatus = (stock.status || "Sağlıklı").trim();
         if (currentStatus === "Sağlıklı") {
             healthyTotals.buy += totalBuyRow; healthyTotals.sell += totalSellRow;
         } else if (currentStatus === "Sağlığı Düşük") {
@@ -115,7 +128,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
         ` : `<span style="color: gray; font-size: 12px;">Yetki Yok</span>`;
 
-        // Sadece admin ise Alış-Satış detaylarını göster
+        // Fiyat sütunları sadece admin modunda dolacak
         const adminCells = isAdmin ? `
             <td>${buyPrice.toFixed(2)} TL</td>
             <td>${sellPrice.toFixed(2)} TL</td>
@@ -124,10 +137,12 @@ function updateTablesByStatus(stocks, isAdmin) {
         ` : "";
 
         row.innerHTML = `
+            <td style="font-family: monospace; color: #3498db;">${barcode}</td>
             <td>${stock.brand_name}</td>
             <td>${stock.model}</td>
             <td>${stock.capacity_gb} GB</td>
             <td><strong id="stock-count-${stock.id}">${count}</strong></td>
+            <td style="color: #f1c40f; font-style: italic;">${offerNotes}</td>
             ${adminCells}
             <td>${actionButtons}</td>
         `;
@@ -137,12 +152,12 @@ function updateTablesByStatus(stocks, isAdmin) {
         else if (currentStatus === "Arızalı" && defectiveBody) defectiveBody.appendChild(row);
     });
 
+    // Sadece admin paneli ise alt toplamları göster
     if (isAdmin) {
         addCategoryTotalRow(healthyBody, healthyTotals);
         addCategoryTotalRow(lowBody, lowTotals);
         addCategoryTotalRow(defectiveBody, defectiveTotals);
 
-        // Genel Muhasebe Kartlarını Güncelle
         const grandBuy = healthyTotals.buy + lowTotals.buy + defectiveTotals.buy;
         const grandSell = healthyTotals.sell + lowTotals.sell + defectiveTotals.sell;
         
@@ -156,7 +171,7 @@ function addCategoryTotalRow(tbody, totals) {
     const row = document.createElement("tr");
     row.className = "total-row";
     row.innerHTML = `
-        <td colspan="4" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
+        <td colspan="6" style="text-align: right; color: #aaa;">Kategori Toplamı:</td>
         <td colspan="2" style="color: #3498db;">Alış: ${totals.buy.toFixed(2)} TL</td>
         <td colspan="2" style="color: #2ecc71;">Satış: ${totals.sell.toFixed(2)} TL</td>
     `;
@@ -200,17 +215,19 @@ window.changeStockInCloud = async function(id, amount) {
 }
 
 // ==========================================
-// 6. BULUTA YENİ HARD DİSK EKLEME (POST)
+// 6. BULUTA YENİ HARD DİSK / TEKLİF EKLEME (POST)
 // ==========================================
 window.addNewStock = async function(event) {
     event.preventDefault();
 
+    const barcode = document.getElementById("prod-barcode").value;
     const brand = document.getElementById("prod-brand").value;
     const model = document.getElementById("prod-model").value;
     const capacity = parseInt(document.getElementById("prod-capacity").value);
     const stock = parseInt(document.getElementById("prod-stock").value);
     const buyPrice = parseFloat(document.getElementById("prod-price").value || 0);
     const sellPrice = parseFloat(document.getElementById("prod-sale-price").value || 0);
+    const offerNotes = document.getElementById("prod-offer").value;
     const status = document.getElementById("prod-status").value;
 
     try {
@@ -223,18 +240,20 @@ window.addNewStock = async function(event) {
                 "Prefer": "return=minimal"
             },
             body: JSON.stringify({
+                barcode: barcode,
                 brand_name: brand,
                 model: model,
                 capacity_gb: capacity,
                 stock_count: stock,
                 price: buyPrice,
                 sale_price: sellPrice,
+                offer_notes: offerNotes,
                 status: status
             })
         });
 
         document.getElementById("add-stock-form").reset();
-        alert("Ürün alım/satım fiyatlarıyla başarıyla eklendi!");
+        alert("Ürün, barkodu ve teklif notuyla birlikte başarıyla eklendi!");
         
         const urlParams = new URLSearchParams(window.location.search);
         fetchStocksFromCloud(urlParams.get('mod') === 'ahmet');
