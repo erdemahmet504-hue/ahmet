@@ -20,8 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem("erdem_bilisim_locked_role");
     }
 
-    const adminSection = document.getElementById("admin-panel");
-    if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
+    // admin-panel kaldırıldı
 
     const barcodeSaleSection = document.getElementById("barcode-sale-panel");
     if (barcodeSaleSection) barcodeSaleSection.style.display = isAdmin ? "block" : "none";

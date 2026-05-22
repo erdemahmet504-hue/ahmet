@@ -230,62 +230,13 @@
         </div>
     </div>
 
-    <div id="admin-panel" style="display: none;">
-        <div class="admin-panel-block">
-            <h3>🆕 Yeni Ürün (Disk) Stoğu Tanımla</h3>
-            <form id="add-stock-form" onsubmit="addNewStock(event)">
-                <div class="form-grid">
-                    <input type="text" id="prod-barcode" placeholder="Barkod No" required>
-                    <input type="text" id="prod-brand" placeholder="Marka (Örn: Samsung)" required>
-                    
-                    <input type="text" id="prod-inch" placeholder="Model/İnç (Örn: 2.5, M.2)" required>
-                    <select id="prod-brand" required>
-                  <option value="" disabled selected>Marka Seçiniz</option>
-               <option value="Seagate">Seagate</option>
-         <option value="Western Digital">Western Digital</option>
-              <option value="Toshiba">Toshiba</option>
-                     <option value="Samsung">Samsung</option>
-</select>
-<select id="prod-capacity" required>
-    <option value="" disabled selected>Kapasite Seçiniz</option>
-    <option value="500">500 GB</option>
-    <option value="1000">1 TB</option>
-    <option value="2000">2 TB</option>
-    <option value="4000">4 TB</option>
-</select>
-                    <input type="number" step="0.01" id="prod-price" placeholder="Dükkan Alış Fiyatı (TL)">
-                    <input type="number" step="0.01" id="prod-sale-price" placeholder="Dükkan Satış Fiyatı (TL)">
-                    <select id="prod-status">
-                        <option value="Sağlıklı">Sağlıklı</option>
-                        <option value="Sağlığı Düşük">Sağlığı Düşük</option>
-                        <option value="Arızalı">Arızalı</option>
-                    </select>
-                    <button type="submit">➕ Stoğa Ekle</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <div id="customer-seller-panel" class="admin-panel-block" style="display: none; border-color: var(--orange);">
         <h3 style="color: var(--orange);">📦 Dükkana Toplu Mal Arz Et / Fiyat Teklifi Al</h3>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Elinizdeki disk adetlerini ve detaylarını girin. Yönetici inceleyip size özel dükkan alış fiyatı sunacaktır.</p>
         <form id="customer-offer-form" onsubmit="submitNewOfferFromSeller(event)">
             <div class="form-grid">
-                <select id="offer-brand" required>
-    <option value="" disabled selected>Marka Seçiniz</option>
-    <option value="Seagate">Seagate</option>
-    <option value="Western Digital">Western Digital</option>
-    <option value="Toshiba">Toshiba</option>
-    <option value="Samsung">Samsung</option>
-</select>
-
-<select id="offer-capacity" required>
-    <option value="" disabled selected>Kapasite Seçiniz</option>
-    <option value="500">500 GB</option>
-    <option value="1000">1 TB</option>
-    <option value="2000">2 TB</option>
-    <option value="4000">4 TB</option>
-</select>
+                <input type="text" id="offer-brand" placeholder="Marka" required>
+                <input type="number" id="offer-capacity" placeholder="Kapasite (GB)" required>
                 <input type="text" id="offer-inch" placeholder="İnç / Tür (Örn: 3.5, NVMe)" required>
                 <input type="number" id="offer-count" placeholder="Kaç Adet Var?" required>
                 <input type="text" id="offer-price" placeholder="Toplam İstenen Fiyat ve Telefonunuz" required>
@@ -322,10 +273,6 @@
             <span style="color: var(--text-muted); font-size:12px;">TOPLAM BEKLENEN CİRO</span>
             <h2 style="color: var(--green);"><span id="grand-sell-value">0.00</span> TL</h2>
         </div>
-        <div>
-            <span style="color: var(--text-muted); font-size:12px;">TAHMİNİ NET KÂR</span>
-            <h2 style="color: var(--orange);"><span id="grand-profit-value">0.00</span> TL</h2>
-        </div>
     </div>
 
     <div class="table-container" id="container-healthy">
@@ -354,9 +301,6 @@
 
     <div id="reports-panel" class="admin-panel-block" style="display: none;">
         <h3>📊 Otomatik Satış Oturumu Raporları</h3>
-        <div style="margin-bottom: 15px; margin-top: 10px;">
-            <button onclick="clearAllSalesLogs()" style="background: var(--red); color: white; width: auto; padding: 10px 15px;">🗑️ Tüm Satış Raporlarını Sıfırla</button>
-        </div>
         <p style="color:var(--text-muted); font-size:12px; margin-bottom:15px;">Barkod sistemiyle yapılan anlık dükkan ciroları oturumlara göre ayrılır.</p>
         <div class="tab-system">
             <button class="tab-btn active" onclick="switchReportTab('Satış 1')">Satış 1</button>
