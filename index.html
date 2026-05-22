@@ -296,6 +296,10 @@
             <span style="color: var(--text-muted); font-size:12px;">TOPLAM BEKLENEN CİRO</span>
             <h2 style="color: var(--green);"><span id="grand-sell-value">0.00</span> TL</h2>
         </div>
+        <div>
+            <span style="color: var(--text-muted); font-size:12px;">TAHMİNİ NET KÂR</span>
+            <h2 style="color: var(--orange);"><span id="grand-profit-value">0.00</span> TL</h2>
+        </div>
     </div>
 
     <div class="table-container" id="container-healthy">
@@ -324,6 +328,9 @@
 
     <div id="reports-panel" class="admin-panel-block" style="display: none;">
         <h3>📊 Otomatik Satış Oturumu Raporları</h3>
+        <div style="margin-bottom: 15px; margin-top: 10px;">
+            <button onclick="clearAllSalesLogs()" style="background: var(--red); color: white; width: auto; padding: 10px 15px;">🗑️ Tüm Satış Raporlarını Sıfırla</button>
+        </div>
         <p style="color:var(--text-muted); font-size:12px; margin-bottom:15px;">Barkod sistemiyle yapılan anlık dükkan ciroları oturumlara göre ayrılır.</p>
         <div class="tab-system">
             <button class="tab-btn active" onclick="switchReportTab('Satış 1')">Satış 1</button>
