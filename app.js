@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod');
     const isAdmin = (mode === 'ahmet');
 
-    // Panellerin ve muhasebe kutularının görünürlüğünü ayarla
     const adminSection = document.getElementById("admin-panel");
     if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
 
@@ -28,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (containerLow) containerLow.style.display = "block";
         if (containerDefective) containerDefective.style.display = "block";
         
-        // Admin girmişse, HTML'deki gizli fiyat kolonlarını görünür yap
         document.querySelectorAll('.admin-only').forEach(el => {
             el.style.display = 'table-cell';
         });
@@ -84,7 +82,6 @@ function updateTablesByStatus(stocks, isAdmin) {
     stocks.forEach(stock => {
         const currentStatus = (stock.status || "Sağlıklı").trim();
 
-        // Müşteriye sadece sağlıklı olanları göster, diğerlerini es geç
         if (!isAdmin && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
@@ -105,19 +102,19 @@ function updateTablesByStatus(stocks, isAdmin) {
             defectiveTotals.buy += totalBuyRow; defectiveTotals.sell += totalSellRow;
         }
 
+        // İŞLEMLER SÜTUNU: Admin ise stok yönetimi, Müşteri ise "Teklif Ver" butonu çıkacak
         const actionButtons = isAdmin ? `
             <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
             <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
             <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
-        ` : `<span style="color: gray; font-size: 12px;">Müşteri Modu</span>`;
+        ` : `<button class="btn-customer-offer" onclick="customerSendOffer(${stock.id})">💬 Teklif Ver</button>`;
 
-        // Admin ise teklif hücresinin yanına düzenleme kalemi koy
+        // TEKLİF SÜTUNU GÖRÜNÜMÜ
         const offerDisplay = isAdmin ? `
             <span id="offer-text-${stock.id}">${offerNotes}</span>
             <button class="btn-edit-offer" onclick="updateOfferInCloud(${stock.id})">✍️</button>
-        ` : `<span>${offerNotes}</span>`;
+        ` : `<span id="offer-text-${stock.id}">${offerNotes}</span>`;
 
-        // Fiyat hücreleri (Admin modunda görünür olacak sınıfla birlikte)
         const adminCells = isAdmin ? `
             <td class="admin-only" style="display: table-cell;">${buyPrice.toFixed(2)} TL</td>
             <td class="admin-only" style="display: table-cell;">${sellPrice.toFixed(2)} TL</td>
@@ -170,14 +167,56 @@ function addCategoryTotalRow(tbody, totals) {
 }
 
 // ==========================================
-// 5. LİSTEDEN ANLIK TEKLİF GÜNCELLEME (PATCH)
+// 5. MÜŞTERİNİN KARŞI TEKLİF YAPMASI (PATCH) -> YENİ ÖZELLİK!
+// ==========================================
+window.customerSendOffer = async function(id) {
+    const textElement = document.getElementById(`offer-text-${id}`);
+    if (!textElement) return;
+
+    const customerOffer = prompt("Bu disk için alım/satım teklifinizi veya mesajınızı yazın (Örn: 1400 TL hemen alırım / İletişim no):");
+    
+    if (customerOffer === null || customerOffer.trim() === "") return;
+
+    // Mevcut notun üzerine ekleme yapıyoruz ki adminin eski yazdığı not silinmesin
+    let currentText = textElement.innerText;
+    if (currentText === "Teklif Yok") currentText = "";
+
+    const cleanOffer = customerOffer.trim();
+    // Notun sonuna ekle
+    const finalOffer = currentText ? `${currentText} | [Müşteri: ${cleanOffer}]` : `[Müşteri: ${cleanOffer}]`;
+    
+    // Ekranda anlık göster
+    textElement.innerText = finalOffer;
+
+    const match = globalStocks.find(s => s.id === id);
+    if (match) match.offer_notes = finalOffer;
+
+    try {
+        await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
+            method: "PATCH",
+            headers: {
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            },
+            body: JSON.stringify({ offer_notes: finalOffer })
+        });
+        alert("Teklifiniz başarıyla Ahmet Usta'ya iletildi!");
+    } catch (error) {
+        console.error("Müşteri teklifi gönderilemedi:", error);
+    }
+}
+
+// ==========================================
+// 6. ADMIN LİSTEDEN ANLIK TEKLİF GÜNCELLEME (PATCH)
 // ==========================================
 window.updateOfferInCloud = async function(id) {
     const textElement = document.getElementById(`offer-text-${id}`);
     if (!textElement) return;
 
     const currentOfferText = textElement.innerText;
-    const newOffer = prompt("Bu disk için güncel alım/satım teklifini girin:", currentOfferText);
+    const newOffer = prompt("Bu disk için ana teklif notunu tamamen güncelleyin (Müşteri notlarını temizlemek veya yeni fiyat yazmak için):", currentOfferText);
     
     if (newOffer === null) return; 
 
@@ -204,7 +243,7 @@ window.updateOfferInCloud = async function(id) {
 }
 
 // ==========================================
-// 6. BULUTTA STOK ADEDİ GÜNCELLEME (PATCH)
+// 7. BULUTTA STOK ADEDİ GÜNCELLEME (PATCH)
 // ==========================================
 window.changeStockInCloud = async function(id, amount) {
     const stockElement = document.getElementById(`stock-count-${id}`);
@@ -240,7 +279,7 @@ window.changeStockInCloud = async function(id, amount) {
 }
 
 // ==========================================
-// 7. BULUTA YENİ HARD DİSK KAYDETME (POST)
+// 8. BULUTA YENİ HARD DİSK KAYDETME (POST)
 // ==========================================
 window.addNewStock = async function(event) {
     event.preventDefault();
@@ -288,7 +327,7 @@ window.addNewStock = async function(event) {
 }
 
 // ==========================================
-// 8. BULUTTAN ÜRÜNÜ TAMAMEN SİLME (DELETE)
+// 9. BULUTTAN ÜRÜNÜ TAMAMEN SİLME (DELETE)
 // ==========================================
 window.deleteStockFromCloud = async function(id) {
     if (!confirm("Bu diski veritabanından tamamen silmek istediğine emin misin?")) return;
