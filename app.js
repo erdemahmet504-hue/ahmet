@@ -8,6 +8,18 @@ let globalStocks = [];
 let currentActiveReportTab = "Satış 1";
 let hasSelectedRole = false; 
 
+// 🔑 CİHAZA ÖZEL BENZERSİZ ZİYARETÇİ KİMLİĞİ ÜRETİCİ
+// Bu fonksiyon sayesinde A müşterisi dükkana girdiğinde, B müşterisinin veritabanına yazdığı teklifleri asla göremez.
+function getOrCreateVisitorId() {
+    let vid = localStorage.getItem("erdem_bilisim_visitor_id");
+    if (!vid) {
+        vid = "MUSTERI_" + Math.random().toString(36).substring(2, 11).toUpperCase();
+        localStorage.setItem("erdem_bilisim_visitor_id", vid);
+    }
+    return vid;
+}
+const MY_VISITOR_ID = getOrCreateVisitorId();
+
 // ==========================================
 // 2. SAYFA YÜKLENDİĞİNDE YETKİ VE HAFIZA KONTROLÜ
 // ==========================================
@@ -16,8 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = urlParams.get('mod'); 
     const isAdmin = (mode === 'ahmet');
 
+    // Eğer admin modundaysa, müşteri kilitlerini kaldır ki her şeye erişebilsin
     if (isAdmin) {
         localStorage.removeItem("erdem_bilisim_locked_role");
+        const adminBadge = document.getElementById("admin-status-badge");
+        if (adminBadge) adminBadge.style.display = "block";
     }
 
     const adminSection = document.getElementById("admin-panel");
@@ -43,12 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isAdmin) {
         if (containerLow) containerLow.style.display = "block";
         if (containerDefective) containerDefective.style.display = "block";
-        
-        document.querySelectorAll('.admin-only').forEach(el => {
-            el.style.display = 'table-cell';
-        });
         renderSalesReport();
     } else {
+        // 🔒 F5 KORUMASI: Seçilen rol hafızadan okunup anında kitleniyor
         const savedRole = localStorage.getItem("erdem_bilisim_locked_role");
         if (savedRole) {
             hasSelectedRole = true;
@@ -89,9 +101,7 @@ function updateTableHeadersDirect(isAdmin) {
         if (!theadRow) return;
 
         let headersHTML = "";
-
         if (isAdmin) {
-            // Admin ekranı tam bir profesyonel satın alım ve borsa ekranına dönüşüyor
             headersHTML = `
                 <th>Barkod / Tür</th>
                 <th>Marka</th>
@@ -100,7 +110,7 @@ function updateTableHeadersDirect(isAdmin) {
                 <th>Mevcut Stok</th>
                 <th style="color: #10b981;">Müşteri Alıcı Teklifi</th>
                 <th style="color: #f97316; background: rgba(249,115,22,0.1);">Gelen Satıcı Arzı (Adet & İstenen)</th>
-                <th style="color: #38bdf8;">Dükkan Alış Fiyatı (Senin Vereceğin)</th>
+                <th style="color: #38bdf8;">Dükkan Alış Fiyatı (Senin)</th>
                 <th>Dükkan Satış Fiyatı</th>
                 <th>Toplam Maliyet</th>
                 <th>İşlemler</th>
@@ -114,7 +124,7 @@ function updateTableHeadersDirect(isAdmin) {
                 <th>Mevcut Stok</th>
                 <th style="color: #10b981;">Dükkan Satış Fiyatı</th>
                 <th style="color: #f97316;">Dükkan Alış Fiyatı</th>
-                <th>Teklif Durumunuz</th>
+                <th>Sizin Teklifiniz</th>
                 <th>İşlemler</th>
             `;
         }
@@ -122,7 +132,6 @@ function updateTableHeadersDirect(isAdmin) {
     });
 }
 
-// ⚡ ROL SEÇİM VE KİLİTLEME MOTORU
 window.handleRoleChange = function() {
     if (hasSelectedRole) return;
     hasSelectedRole = true;
@@ -161,9 +170,6 @@ function getSelectedCustomerRole() {
     return radio ? radio.value : "alici";
 }
 
-// ==========================================
-// 3. BULUTTAN VERİLERİ GETİRME (GET)
-// ==========================================
 async function fetchStocksFromCloud(isAdmin) {
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks?select=*`, {
@@ -173,36 +179,43 @@ async function fetchStocksFromCloud(isAdmin) {
                 "Authorization": `Bearer ${SUPABASE_KEY}`
             }
         });
-
         if (!response.ok) return;
-
         globalStocks = await response.json();
         if (Array.isArray(globalStocks)) {
             globalStocks.sort((a, b) => a.id - b.id);
             updateTablesByStatus(globalStocks, isAdmin);
-            if (isAdmin) renderSalesReport();
         }
     } catch (error) {
         console.error(error);
     }
 }
 
-function parseOfferNotes(rawNotes) {
+// 🔐 TİCARİ GİZLİLİK SÜZGEÇİ: Başka müşterilerin tekliflerini anında sansürler
+function parseOfferNotesSecure(rawNotes, isAdmin) {
     let buyer = "Yok";
     let seller = "Yok";
+    let originalCreator = "Sistem";
 
     if (rawNotes && rawNotes !== "Teklif Yok") {
         const parts = rawNotes.split("||");
         parts.forEach(part => {
             if (part.trim().startsWith("ALICI:")) buyer = part.replace("ALICI:", "").trim();
             else if (part.trim().startsWith("SATICI:")) seller = part.replace("SATICI:", "").trim();
+            else if (part.trim().startsWith("OWNER:")) originalCreator = part.replace("OWNER:", "").trim();
         });
     }
-    return { buyer, seller };
+
+    // 🔒 Ticari Koruma Bariyeri: Eğer admin değilse ve sahibinin ID'si uyuşmuyorsa sansürle!
+    if (!isAdmin && originalCreator !== "Sistem" && originalCreator !== MY_VISITOR_ID) {
+        buyer = "Yok";
+        seller = "Yok";
+    }
+
+    return { buyer, seller, originalCreator };
 }
 
 // ==========================================
-// 4. ANA TABLO YENİLEME VE SATIN ALIM EKRANI MANTIĞI
+// 4. TABLO MOTORU VE SANSÜR SİSTEMİ
 // ==========================================
 function updateTablesByStatus(stocks, isAdmin) {
     const healthyBody = document.querySelector("#table-healthy tbody");
@@ -226,16 +239,20 @@ function updateTablesByStatus(stocks, isAdmin) {
         const inch = stock.model || "---"; 
         const barcode = stock.barcode || "---";
         
-        const parsedOffers = parseOfferNotes(stock.offer_notes);
+        // Güvenli çözücü devreye giriyor
+        const parsedOffers = parseOfferNotesSecure(stock.offer_notes, isAdmin);
         const count = parseInt(stock.stock_count || 0);
         const buyPrice = parseFloat(stock.price || 0);
         const sellPrice = parseFloat(stock.sale_price || 0);
         
+        // Eğer dış arz satırıysa ve başka bir cihaza aitse, bu müşteri o satırı tamamen gizlesin
+        if (!isAdmin && barcode === "Müşteri Arzı" && parsedOffers.originalCreator !== MY_VISITOR_ID) {
+            return;
+        }
+
         if (!isAdmin && currentRole !== "satici" && currentStatus !== "Sağlıklı") return;
 
         const row = document.createElement("tr");
-        
-        // Eğer dışarıdan bir satıcı arzıysa (Barkod "Müşteri Arzı") satırı görsel olarak farklı kılalım
         if (isAdmin && barcode === "Müşteri Arzı") {
             row.style.background = "rgba(249, 115, 22, 0.08)";
             row.style.borderLeft = "4px solid var(--orange)";
@@ -254,7 +271,7 @@ function updateTablesByStatus(stocks, isAdmin) {
 
         if (isAdmin) {
             // ==========================================
-            // AKILLI ADMİN SATIN ALIM VE ONAY GÖRÜNÜMÜ
+            // FULL YETKİLİ SATIN ALIM VE YÖNETİCİ EKRANI
             // ==========================================
             const buyerNotice = parsedOffers.buyer !== "Yok" ? `<span style="background:#eab308; color:#000; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">YENİ</span>` : "";
             const sellerNotice = parsedOffers.seller !== "Yok" ? `<span style="background:#f97316; color:#fff; padding:2px 4px; border-radius:3px; font-size:10px; margin-right:4px; animation: blink 1s infinite;">TEKLİF</span>` : "";
@@ -266,9 +283,7 @@ function updateTablesByStatus(stocks, isAdmin) {
                 <td><strong>${brand}</strong></td>
                 <td>${capacity}</td>
                 <td><strong>${inch}"</strong></td>
-                <td>
-                    <span id="stock-count-${stock.id}" style="font-size:15px; font-weight:bold;">${count}</span>
-                </td>
+                <td><span id="stock-count-${stock.id}" style="font-weight:bold;">${count}</span></td>
                 
                 <td style="color: #10b981;">
                     <div id="display-ALICI-${stock.id}">
@@ -308,17 +323,15 @@ function updateTablesByStatus(stocks, isAdmin) {
                 </td>
 
                 <td style="color: #94a3b8;">${totalBuyRow.toFixed(2)} TL</td>
-
                 <td>
                     <button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button>
                     <button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button>
                     <button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button>
                 </td>
             `;
-
         } else {
             // ==========================================
-            // KÖRLENMİŞ MÜŞTERİ PANELİ GÖRÜNÜMÜ
+            // KORUMALI VE SANSÜRLÜ MÜŞTERİ PANELİ
             // ==========================================
             let buyerCellHTML = "";
             let sellerCellHTML = "";
@@ -328,7 +341,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             if (currentRole === "alici") {
                 buyerCellHTML = `<td style="color: #10b981; font-size:15px;"><strong>${sellPrice.toFixed(2)} TL</strong></td>`;
                 sellerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli</td>`;
-                customerStatusCellHTML = `<td style="color:#10b981; font-size:12px;">Mevcut Teklifiniz: <br><strong>${parsedOffers.buyer}</strong></td>`;
+                customerStatusCellHTML = `<td style="color:#10b981; font-size:12px;">Sizin Teklifiniz: <br><strong>${parsedOffers.buyer}</strong></td>`;
                 
                 actionButtons = `
                     <td>
@@ -343,7 +356,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             } else {
                 buyerCellHTML = `<td style="color: #64748b; font-size:12px; opacity:0.4;">🔒 Gizli</td>`;
                 sellerCellHTML = `<td style="color: #f97316; font-size:15px;"><strong>${buyPrice.toFixed(2)} TL</strong></td>`;
-                customerStatusCellHTML = `<td style="color:#f97316; font-size:12px;">Dükkana Arzınız: <br><strong>${parsedOffers.seller}</strong></td>`;
+                customerStatusCellHTML = `<td style="color:#f97316; font-size:12px;">Sizin Dükkana Arzınız: <br><strong>${parsedOffers.seller}</strong></td>`;
 
                 if (barcode === "Müşteri Arzı") {
                     actionButtons = `
@@ -418,7 +431,6 @@ window.showInlineInput = function(id, role) {
     if (editEl) editEl.style.display = "flex";
 }
 
-// Müşterilerin Yazılı Metin Alanı Girişleri (Teklifler İçin)
 window.submitInlineOffer = async function(id, role) {
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
@@ -426,16 +438,14 @@ window.submitInlineOffer = async function(id, role) {
     const stockItem = globalStocks.find(s => s.id === id);
     if (!stockItem) return;
 
-    const parsed = parseOfferNotes(stockItem.offer_notes);
+    const parsed = parseOfferNotesSecure(stockItem.offer_notes, true); 
     const inputVal = document.getElementById(`input-${role}-${id}`).value.trim();
 
-    if (role === 'ALICI') {
-        parsed.buyer = inputVal === "" ? "Yok" : inputVal;
-    } else if (role === 'SATICI') {
-        parsed.seller = inputVal === "" ? "Yok" : inputVal;
-    }
+    if (role === 'ALICI') parsed.buyer = inputVal === "" ? "Yok" : inputVal;
+    else if (role === 'SATICI') parsed.seller = inputVal === "" ? "Yok" : inputVal;
 
-    const finalOfferString = `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller}`;
+    // 🔒 Teklifi veritabanına gönderirken tarayıcının kimliğini (`OWNER`) ekliyoruz
+    const finalOfferString = `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller} || OWNER: ${isAdmin ? parsed.originalCreator : MY_VISITOR_ID}`;
     let updatePayload = { offer_notes: finalOfferString };
 
     try {
@@ -448,25 +458,18 @@ window.submitInlineOffer = async function(id, role) {
             },
             body: JSON.stringify(updatePayload)
         });
-
-        if (response.ok) {
-            fetchStocksFromCloud(isAdmin);
-        }
+        if (response.ok) fetchStocksFromCloud(isAdmin);
     } catch (error) {
         console.error(error);
     }
 }
 
-// ⚡ ADMİNİN DOĞRUDAN SAYISAL SATIN ALIM VEYA SATIŞ FİYATI VERME MOTORU
 window.submitDirectPrice = async function(id, type) {
-    const inputVal = parseFloat(document.getElementById(`input-${type}-${id}`).value || 0);
     let updatePayload = {};
+    const inputVal = parseFloat(document.getElementById(`input-${type}-${id}`).value || 0);
 
-    if (type === 'ALIS') {
-        updatePayload.price = inputVal;
-    } else if (type === 'SATIS') {
-        updatePayload.sale_price = inputVal;
-    }
+    if (type === 'ALIS') updatePayload.price = inputVal;
+    else if (type === 'SATIS') updatePayload.sale_price = inputVal;
 
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
@@ -478,10 +481,7 @@ window.submitDirectPrice = async function(id, type) {
             },
             body: JSON.stringify(updatePayload)
         });
-
-        if (response.ok) {
-            fetchStocksFromCloud(true);
-        }
+        if (response.ok) fetchStocksFromCloud(true);
     } catch (error) {
         console.error(error);
     }
@@ -497,7 +497,8 @@ window.submitNewOfferFromSeller = async function(event) {
     const count = document.getElementById("offer-count").value;
     const priceAndTel = document.getElementById("offer-price").value;
 
-    const offerNotes = `ALICI: Yok || SATICI: ${count} Adet - İstenen Fiyat/Tel: ${priceAndTel}`;
+    // 🔒 Sıfırdan yapılan arzlarda cihaz kimliğini basıyoruz
+    const offerNotes = `ALICI: Yok || SATICI: ${count} Adet - İstenen: ${priceAndTel} || OWNER: ${MY_VISITOR_ID}`;
 
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks`, {
@@ -512,14 +513,13 @@ window.submitNewOfferFromSeller = async function(event) {
                 brand_name: brand,
                 capacity_gb: capacity,
                 model: inch, 
-                stock_count: 0, // Sen fiyatta anlaşıp stoğu artırana kadar sıfır kalır
+                stock_count: 0, 
                 price: 0,
                 sale_price: 0,
                 offer_notes: offerNotes,
                 status: status
             })
         });
-
         if (response.ok) {
             document.getElementById("customer-offer-form").reset();
             alert("Teklifiniz dükkan yönetimine başarıyla iletildi abim.");
@@ -533,11 +533,9 @@ window.submitNewOfferFromSeller = async function(event) {
 window.changeStockInCloud = async function(id, amount) {
     const stockElement = document.getElementById(`stock-count-${id}`);
     if (!stockElement) return;
-
     let currentStock = parseInt(stockElement.innerText);
     let newStock = currentStock + amount;
     if (newStock < 0) newStock = 0;
-
     stockElement.innerText = newStock;
 
     try {
@@ -557,7 +555,6 @@ window.changeStockInCloud = async function(id, amount) {
 
 window.addNewStock = async function(event) {
     event.preventDefault();
-
     const barcode = document.getElementById("prod-barcode").value;
     const brand = document.getElementById("prod-brand").value;
     const capacity = parseInt(document.getElementById("prod-capacity").value);
@@ -583,11 +580,10 @@ window.addNewStock = async function(event) {
                 stock_count: stock,
                 price: buyPrice,
                 sale_price: sellPrice,
-                offer_notes: "ALICI: Yok || SATICI: Yok",
+                offer_notes: "ALICI: Yok || SATICI: Yok || OWNER: Sistem",
                 status: status
             })
         });
-
         if (response.ok) {
             document.getElementById("add-stock-form").reset();
             fetchStocksFromCloud(true);
@@ -600,7 +596,6 @@ window.addNewStock = async function(event) {
 window.deleteStockFromCloud = async function(id) {
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
-
     try {
         const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, {
             method: "DELETE",
@@ -609,10 +604,7 @@ window.deleteStockFromCloud = async function(id) {
                 "Authorization": `Bearer ${SUPABASE_KEY}`
             }
         });
-
-        if (response.ok) {
-            fetchStocksFromCloud(isAdmin);
-        }
+        if (response.ok) fetchStocksFromCloud(isAdmin);
     } catch (error) {
         console.error(error);
     }
@@ -624,7 +616,6 @@ window.barcodeSaleStockDrop = async function(event) {
     const sessionSelect = document.getElementById("active-sale-session");
     const scannedBarcode = barcodeInput.value.trim();
     const targetSession = sessionSelect.value;
-    
     if (!scannedBarcode) return;
 
     const matchedStock = globalStocks.find(s => s.barcode && s.barcode.trim() === scannedBarcode);
@@ -633,7 +624,6 @@ window.barcodeSaleStockDrop = async function(event) {
         barcodeInput.focus();
         return;
     }
-
     let newStockCount = parseInt(matchedStock.stock_count) - 1;
 
     try {
@@ -646,7 +636,6 @@ window.barcodeSaleStockDrop = async function(event) {
             },
             body: JSON.stringify({ stock_count: newStockCount })
         });
-
         if (response.ok) {
             saveSaleToSessionLogs(scannedBarcode, matchedStock.brand_name, `${matchedStock.capacity_gb}GB ${matchedStock.model}"`, targetSession, parseFloat(matchedStock.sale_price || 0));
             barcodeInput.value = "";
@@ -661,16 +650,10 @@ window.barcodeSaleStockDrop = async function(event) {
 function saveSaleToSessionLogs(barcode, brand, desc, sessionName, salePrice) {
     let allSales = JSON.parse(localStorage.getItem("erdem_bilisim_sales_logs")) || [];
     let existingIndex = allSales.findIndex(s => s.barcode === barcode && s.session === sessionName);
-    
-    if (existingIndex > -1) {
-        allSales[existingIndex].count += 1;
-    } else {
+    if (existingIndex > -1) allSales[existingIndex].count += 1;
+    else {
         allSales.push({
-            barcode: barcode,
-            title: `${brand} ${desc}`,
-            session: sessionName,
-            count: 1,
-            price: salePrice
+            barcode: barcode, title: `${brand} ${desc}`, session: sessionName, count: 1, price: salePrice
         });
     }
     localStorage.setItem("erdem_bilisim_sales_logs", JSON.stringify(allSales));
@@ -688,22 +671,17 @@ window.switchReportTab = function(sessionName) {
 function renderSalesReport() {
     const tbody = document.getElementById("reports-tbody");
     if (!tbody) return;
-    
     let allSales = JSON.parse(localStorage.getItem("erdem_bilisim_sales_logs")) || [];
     let filteredSales = allSales.filter(s => s.session === currentActiveReportTab);
-    
     if (filteredSales.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" style="color: #64748b; text-align: center;">Satış yok.</td></tr>`;
         return;
     }
-    
     tbody.innerHTML = "";
     let totalSessionRevenue = 0;
-    
     filteredSales.forEach(sale => {
         const rowTotal = sale.count * sale.price;
         totalSessionRevenue += rowTotal;
-        
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td style="font-family: monospace; color: #38bdf8;">${sale.barcode}</td>
@@ -715,7 +693,6 @@ function renderSalesReport() {
         `;
         tbody.appendChild(tr);
     });
-    
     const totalTr = document.createElement("tr");
     totalTr.style.backgroundColor = "#1e293b";
     totalTr.style.fontWeight = "bold";
