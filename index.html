@@ -25,7 +25,6 @@
         .btn-delete { background-color: #dc3545; color: white; }
         .btn-edit-offer { background-color: #9b59b6; color: white; padding: 3px 6px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; margin-left: 5px; }
         
-        /* Alıcı ve Satıcı İkili Buton Tasarımları */
         .btn-buyer { background-color: #2980b9; color: white; padding: 6px 10px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; margin-bottom: 4px; display: block; width: 120px; text-align: center; }
         .btn-seller { background-color: #e67e22; color: white; padding: 6px 10px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; display: block; width: 120px; text-align: center; }
         
@@ -35,7 +34,6 @@
         .card-buy { background-color: #1a252f; border-color: #2980b9; }
         .card-sell { background-color: #1e2b24; border-color: #27ae60; }
         
-        /* Admin görünürlük kuralı */
         .admin-only { display: none; }
     </style>
 </head>
@@ -75,8 +73,8 @@
                 <input type="number" id="prod-sale-price" step="0.01" value="0">
             </div>
             <div class="form-group">
-                <label>İlk Teklif / Durum Notu:</label>
-                <input type="text" id="prod-offer" placeholder="İlk teklif veya durum notunu yazın">
+                <label>İlk Teklif Durumu (Format: ALICI: Yok || SATICI: Yok):</label>
+                <input type="text" id="prod-offer" value="ALICI: Yok || SATICI: Yok">
             </div>
             <div class="form-group">
                 <label>Disk Durumu:</label>
@@ -100,7 +98,8 @@
                     <th>Model</th>
                     <th>Boyut</th>
                     <th>Mevcut Stok</th>
-                    <th>Teklif / Durum Notu</th>
+                    <th style="color: #2ecc71;">Alıcı Teklifi</th>
+                    <th style="color: #e67e22;">Satıcı Teklifi</th>
                     <th class="admin-only">Alış Fiyatı</th>
                     <th class="admin-only">Satış Fiyatı</th>
                     <th class="admin-only">Toplam Alış</th>
@@ -122,7 +121,8 @@
                     <th>Model</th>
                     <th>Boyut</th>
                     <th>Mevcut Stok</th>
-                    <th>Teklif / Durum Notu</th>
+                    <th style="color: #2ecc71;">Alıcı Teklifi</th>
+                    <th style="color: #e67e22;">Satıcı Teklifi</th>
                     <th class="admin-only">Alış Fiyatı</th>
                     <th class="admin-only">Satış Fiyatı</th>
                     <th class="admin-only">Toplam Alış</th>
@@ -144,7 +144,8 @@
                     <th>Model</th>
                     <th>Boyut</th>
                     <th>Mevcut Stok</th>
-                    <th>Teklif / Durum Notu</th>
+                    <th style="color: #2ecc71;">Alıcı Teklifi</th>
+                    <th style="color: #e67e22;">Satıcı Teklifi</th>
                     <th class="admin-only">Alış Fiyatı</th>
                     <th class="admin-only">Satış Fiyatı</th>
                     <th class="admin-only">Toplam Alış</th>
