@@ -1,58 +1,43 @@
 // ==========================================
-// 1. BULUT VERİTABANI BAĞLANTI BİLGİLERİ
+// 1. BULUT VERİTABANI BAĞLANTI BİLGİLERİ VE AUTH
 // ==========================================
 const SUPABASE_URL = "https://zwayidssoujhrjxzgdql.supabase.co/rest/v1"; 
-const SUPABASE_KEY = "sb_publishable_wHYCLbDylFN9wnRXuGCmFg_cl1OPZAC"; // Veritabanı anahtarını buraya eklemeyi unutma!
+const SUPABASE_KEY = "sb_publishable_wHYCLbDylFN9wnRXuGCmFg_cl1OPZAC"; 
+
+// YENİ: Supabase Client (Auth ve Siparişler İçin)
+const _supabase = supabase.createClient("https://zwayidssoujhrjxzgdql.supabase.co", SUPABASE_KEY);
+let currentUser = null;
 
 let globalStocks = [];
 let shoppingCart = []; 
 let currentActiveReportTab = "Satış 1";
 let hasSelectedRole = false; 
-let salesChartInstance = null; // Grafik objesi hafızası
-let globalSalesLogs = [];      // Bulut satış geçmişi hafızası
 
 // ==========================================
-// 2. TEMA (DARK/LIGHT) VE TOAST BİLDİRİM SİSTEMİ
+// 2. SAYFA YÜKLENDİĞİNDE YETKİ KONTROLÜ
 // ==========================================
-function initTheme() {
-    const savedTheme = localStorage.getItem('erdem_bilisim_theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
-        const btn = document.getElementById('theme-toggle-btn');
-        if(btn) btn.innerText = '☀️';
+document.addEventListener("DOMContentLoaded", async () => {
+    
+    // YENİ: Kullanıcı Oturum Kontrolü
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (session) {
+        currentUser = session.user;
+        document.getElementById("auth-nav-btn").style.display = "none";
+        document.getElementById("user-panel-btn").style.display = "block";
     }
-}
 
-window.toggleTheme = function() {
-    document.body.classList.toggle('dark-theme');
-    const isDark = document.body.classList.contains('dark-theme');
-    localStorage.setItem('erdem_bilisim_theme', isDark ? 'dark' : 'light');
-    const btn = document.getElementById('theme-toggle-btn');
-    if(btn) btn.innerText = isDark ? '☀️' : '🌙';
-    if(salesChartInstance) renderReportTabs(); // Grafiğin renklerini güncelle
-}
+    _supabase.auth.onAuthStateChange((event, session) => {
+        if (session) {
+            currentUser = session.user;
+            document.getElementById("auth-nav-btn").style.display = "none";
+            document.getElementById("user-panel-btn").style.display = "block";
+        } else {
+            currentUser = null;
+            document.getElementById("auth-nav-btn").style.display = "block";
+            document.getElementById("user-panel-btn").style.display = "none";
+        }
+    });
 
-window.showToast = function(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 3000);
-}
-
-window.toggleModal = function(modalId) {
-    const modal = document.getElementById(modalId);
-    if(modal) modal.style.display = modal.style.display === "flex" ? "none" : "flex";
-}
-
-// ==========================================
-// 3. SAYFA YÜKLENDİĞİNDE YETKİ KONTROLÜ
-// ==========================================
-document.addEventListener("DOMContentLoaded", () => {
-    initTheme();
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = (urlParams.get('mod') === 'ahmet');
 
@@ -60,6 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const barcodeSaleSection = document.getElementById("barcode-sale-panel");
     const grandTotalSection = document.getElementById("grand-total-section");
     const reportsSection = document.getElementById("reports-panel");
+    const biDashboardPanel = document.getElementById("bi-dashboard-panel"); // YENİ
     
     const roleSelector = document.getElementById("customer-role-selector");
     const storefrontPanel = document.getElementById("storefront-panel");
@@ -73,58 +59,105 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (isAdmin) {
         localStorage.removeItem("erdem_bilisim_locked_role");
-        if(adminPanel) adminPanel.style.display = "block";
-        if(barcodeSaleSection) barcodeSaleSection.style.display = "block";
-        if(grandTotalSection) grandTotalSection.style.display = "flex";
-        if(reportsSection) reportsSection.style.display = "block";
-        if(roleSelector) roleSelector.style.display = "none";
-        if(storefrontPanel) storefrontPanel.style.display = "none"; 
-        if(cartBtn) cartBtn.style.display = "none";
-        if(adminBadge) adminBadge.style.display = "block";
+        adminPanel.style.display = "block";
+        barcodeSaleSection.style.display = "block";
+        grandTotalSection.style.display = "flex";
+        reportsSection.style.display = "block";
+        biDashboardPanel.style.display = "block"; // YENİ
 
-        if(containerHealthy) containerHealthy.style.display = "block";
-        if(containerLow) containerLow.style.display = "block";
-        if(containerDefective) containerDefective.style.display = "block";
+        roleSelector.style.display = "none";
+        storefrontPanel.style.display = "none"; 
+        cartBtn.style.display = "none";
+        adminBadge.style.display = "block";
+
+        containerHealthy.style.display = "block";
+        containerLow.style.display = "block";
+        containerDefective.style.display = "block";
 
         updateTableHeadersDirect(true);
-        fetchSalesLogsFromCloud();
+        renderReportTabs();
     } else {
         updateTableHeadersDirect(false);
         const savedRole = localStorage.getItem("erdem_bilisim_locked_role");
         if (savedRole) {
             hasSelectedRole = true;
-            const radio = document.querySelector(`input[name="user-role-radio"][value="${savedRole}"]`);
-            if(radio) radio.checked = true;
+            document.querySelector(`input[name="user-role-radio"][value="${savedRole}"]`).checked = true;
             document.querySelectorAll('input[name="user-role-radio"]').forEach(radio => radio.disabled = true);
-            if(roleSelector) roleSelector.style.opacity = "0.6";
+            roleSelector.style.opacity = "0.6";
 
             if (savedRole === "satici") {
-                if(sellerFormPanel) sellerFormPanel.style.display = "block";
-                if(storefrontPanel) storefrontPanel.style.display = "none";
-                if(cartBtn) cartBtn.style.display = "none";
-                if(containerHealthy) containerHealthy.style.display = "block";
-                if(containerLow) containerLow.style.display = "block";
-                if(containerDefective) containerDefective.style.display = "block";
+                sellerFormPanel.style.display = "block";
+                storefrontPanel.style.display = "none";
+                cartBtn.style.display = "none";
+                containerHealthy.style.display = "block";
+                containerLow.style.display = "block";
+                containerDefective.style.display = "block";
             } else {
-                if(storefrontPanel) storefrontPanel.style.display = "block";
+                storefrontPanel.style.display = "block";
             }
         }
     }
     fetchStocksFromCloud(isAdmin);
 });
 
+// ==========================================
+// YENİ: AUTH (KAYIT / GİRİŞ) FONKSİYONLARI
+// ==========================================
+window.toggleGenericModal = function(id) {
+    const m = document.getElementById(id);
+    m.style.display = m.style.display === "flex" ? "none" : "flex";
+    if (id === 'user-panel-modal' && currentUser) {
+        document.getElementById("user-email-display").innerText = currentUser.email;
+        fetchUserOrders();
+    }
+}
+
+window.switchAuthMode = function(mode) {
+    if(mode === 'register') {
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("register-form").style.display = "block";
+        document.getElementById("auth-title").innerText = "Kayıt Ol";
+    } else {
+        document.getElementById("login-form").style.display = "block";
+        document.getElementById("register-form").style.display = "none";
+        document.getElementById("auth-title").innerText = "Giriş Yap";
+    }
+}
+
+window.handleRegister = async function() {
+    const email = document.getElementById("reg-email").value;
+    const password = document.getElementById("reg-password").value;
+    const { data, error } = await _supabase.auth.signUp({ email, password });
+    if(error) { alert("Kayıt Hatası: " + error.message); }
+    else { alert("Kayıt başarılı! Lütfen giriş yapın."); switchAuthMode('login'); }
+}
+
+window.handleLogin = async function() {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+    if(error) { alert("Giriş Hatası: " + error.message); }
+    else { alert("Başarıyla giriş yapıldı!"); toggleGenericModal('auth-modal'); }
+}
+
+window.handleLogout = async function() {
+    await _supabase.auth.signOut();
+    alert("Oturum kapatıldı.");
+    toggleGenericModal('user-panel-modal');
+}
+
+// ==========================================
+// 3. ROL SEÇİMİ VE GÖRÜNÜM AYARLARI
+// ==========================================
 window.handleRoleChange = function() {
     if (hasSelectedRole) return;
     hasSelectedRole = true;
 
-    const radioChecked = document.querySelector('input[name="user-role-radio"]:checked');
-    if(!radioChecked) return;
-    const role = radioChecked.value;
+    const role = document.querySelector('input[name="user-role-radio"]:checked').value;
     localStorage.setItem("erdem_bilisim_locked_role", role);
 
     document.querySelectorAll('input[name="user-role-radio"]').forEach(radio => radio.disabled = true);
-    const selector = document.getElementById("customer-role-selector");
-    if(selector) selector.style.opacity = "0.6";
+    document.getElementById("customer-role-selector").style.opacity = "0.6";
 
     const storefrontPanel = document.getElementById("storefront-panel");
     const sellerFormPanel = document.getElementById("customer-seller-panel");
@@ -135,14 +168,14 @@ window.handleRoleChange = function() {
     const containerDefective = document.getElementById("container-defective");
 
     if(role === 'alici') {
-        if(storefrontPanel) storefrontPanel.style.display = "block";
+        storefrontPanel.style.display = "block";
     } else {
-        if(sellerFormPanel) sellerFormPanel.style.display = "block";
-        if(storefrontPanel) storefrontPanel.style.display = "none";
-        if(cartBtn) cartBtn.style.display = "none";
-        if(containerHealthy) containerHealthy.style.display = "block";
-        if(containerLow) containerLow.style.display = "block";
-        if(containerDefective) containerDefective.style.display = "block";
+        sellerFormPanel.style.display = "block";
+        storefrontPanel.style.display = "none";
+        cartBtn.style.display = "none";
+        containerHealthy.style.display = "block";
+        containerLow.style.display = "block";
+        containerDefective.style.display = "block";
     }
 
     const isAdmin = (new URLSearchParams(window.location.search).get('mod') === 'ahmet');
@@ -159,18 +192,17 @@ async function fetchStocksFromCloud(isAdmin) {
             headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
         });
 
-        if (!response.ok) { showToast("Stok verileri buluttan çekilemedi!", "error"); return; }
+        if (!response.ok) return;
 
         globalStocks = await response.json();
         globalStocks.sort((a, b) => a.id - b.id);
         
         if (isAdmin) {
             updateTablesByStatus(globalStocks, true);
+            calculateBusinessIntelligence(); // YENİ: BI Verilerini Güncelle
         } else {
-            const savedRole = localStorage.getItem("erdem_bilisim_locked_role");
-            const radioChecked = document.querySelector('input[name="user-role-radio"]:checked');
-            const role = savedRole || (radioChecked ? radioChecked.value : 'alici');
-            if(role === 'alici') filterStorefront();
+            const role = localStorage.getItem("erdem_bilisim_locked_role") || document.querySelector('input[name="user-role-radio"]:checked').value;
+            if(role === 'alici') renderStorefront(globalStocks);
             else updateTablesByStatus(globalStocks, false);
         }
     } catch (error) {
@@ -179,41 +211,18 @@ async function fetchStocksFromCloud(isAdmin) {
 }
 
 // ==========================================
-// 5. MÜŞTERİ: VİTRİN VE AKILLI ARAMA/FİLTRE SİSTEMİ
+// 5. MÜŞTERİ: VİTRİN VE AKILLI RESİM SİSTEMİ
 // ==========================================
-window.filterStorefront = function() {
-    const searchInput = document.getElementById('search-input');
-    const filterTypeEl = document.getElementById('filter-type');
-    const searchText = searchInput ? searchInput.value.toLowerCase() : "";
-    const filterType = filterTypeEl ? filterTypeEl.value : "all";
-
-    const filteredStocks = globalStocks.filter(stock => {
-        const currentStatus = (stock.status || "%100").trim();
-        const count = parseInt(stock.stock_count || 0);
-        const isHealthy = (currentStatus === "%100" || currentStatus === "Sağlıklı") && count > 0;
-        
-        const brand = (stock.brand_name || "").toLowerCase();
-        const model = (stock.model || "").toLowerCase();
-        const matchesSearch = brand.includes(searchText) || model.includes(searchText);
-        
-        const matchesType = filterType === "all" || stock.model.includes(filterType);
-        return isHealthy && matchesSearch && matchesType;
-    });
-
-    renderStorefront(filteredStocks);
-}
-
 function renderStorefront(stocks) {
     const grid = document.getElementById("products-grid-container");
-    if(!grid) return;
     grid.innerHTML = "";
 
-    if(stocks.length === 0) {
-        grid.innerHTML = "<p style='color: var(--text-muted);'>Aradığınız kriterlere uygun satılık ürün bulunamadı.</p>";
-        return;
-    }
-
     stocks.forEach(stock => {
+        const currentStatus = (stock.status || "%100").trim();
+        const count = parseInt(stock.stock_count || 0);
+        
+        if ((currentStatus !== "%100" && currentStatus !== "Sağlıklı") || count <= 0) return;
+
         let formattedCapacity = "---";
         if (stock.capacity_gb) {
             const cap = parseInt(stock.capacity_gb);
@@ -235,35 +244,35 @@ function renderStorefront(stocks) {
             }
         }
 
-        grid.innerHTML += `
-            <div class="product-card">
-                <img src="${imageUrl}" class="product-img" alt="${brand} Disk">
-                <div class="prod-brand">${brand}</div>
-                <div class="prod-specs">${formattedCapacity} • ${inch}" Form • Durum: %100</div>
-                <div style="font-size: 12px; color: var(--orange);">Stokta: ${stock.stock_count} Adet</div>
-                <div class="prod-price">${price} TL</div>
-                <button class="btn-add-cart" onclick="addToCart(${stock.id}, '${brand}', '${formattedCapacity}', ${price})">🛒 Sepete Ekle</button>
-            </div>
+        const card = document.createElement("div");
+        card.className = "product-card";
+        
+        card.innerHTML = `
+            <img src="${imageUrl}" class="product-img" alt="${brand} Disk">
+            <div class="prod-brand">${brand}</div>
+            <div class="prod-specs">${formattedCapacity} • ${inch}" Form • Durum: %100</div>
+            <div style="font-size: 12px; color: var(--orange);">Stokta: ${count} Adet</div>
+            <div class="prod-price">${price} TL</div>
+            <button class="btn-add-cart" onclick="addToCart(${stock.id}, '${brand}', '${formattedCapacity}', ${price})">🛒 Sepete Ekle</button>
         `;
+        grid.appendChild(card);
     });
+
+    if(grid.innerHTML === "") grid.innerHTML = "<p style='color: var(--text-muted);'>Şu an vitrinde satılık ürün bulunmuyor.</p>";
 }
 
 window.addToCart = function(id, brand, capacity, price) {
     const existing = shoppingCart.find(item => item.id === id);
     if(existing) existing.qty += 1;
     else shoppingCart.push({ id, brand, capacity, price, qty: 1 });
-    updateCartUI(); 
-    showToast(`${brand} ${capacity} sepete eklendi!`, "success");
+    updateCartUI(); alert(`${brand} ${capacity} sepete eklendi!`);
 }
 
 function updateCartUI() {
     const totalItems = shoppingCart.reduce((sum, item) => sum + item.qty, 0);
-    const countEl = document.getElementById("header-cart-count");
-    if(countEl) countEl.innerText = totalItems;
-    
+    document.getElementById("header-cart-count").innerText = totalItems;
     const list = document.getElementById("cart-items-list");
     const totalEl = document.getElementById("cart-total-price");
-    if(!list) return;
     
     list.innerHTML = ""; let grandTotal = 0;
     if(shoppingCart.length === 0) list.innerHTML = "<p>Sepetiniz şu an boş.</p>";
@@ -271,19 +280,57 @@ function updateCartUI() {
         shoppingCart.forEach((item, index) => {
             const rowTotal = item.qty * item.price; grandTotal += rowTotal;
             list.innerHTML += `
-                <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding:10px 0;">
+                <div class="cart-item">
                     <div><strong>${item.brand} ${item.capacity}</strong><br><span style="font-size:12px; color:var(--text-muted);">${item.qty} Adet x ${item.price.toFixed(2)} TL</span></div>
                     <div style="text-align:right;"><strong style="color:var(--blue);">${rowTotal.toFixed(2)} TL</strong><br><button onclick="removeFromCart(${index})" style="background:none; border:none; color:var(--red); font-size:12px; margin-top:5px; cursor:pointer;">Kaldır</button></div>
                 </div>`;
         });
     }
-    if(totalEl) totalEl.innerText = `Toplam: ${grandTotal.toFixed(2)} TL`;
+    totalEl.innerText = `Toplam: ${grandTotal.toFixed(2)} TL`;
 }
 
 window.removeFromCart = function(index) { shoppingCart.splice(index, 1); updateCartUI(); }
-window.checkout = function() {
-    if(shoppingCart.length === 0) { showToast("Sepetiniz boş!", "error"); return; }
-    showToast("Sanal POS entegrasyonu (PayTR vb.) alındığında burası aktifleşecek.", "info");
+window.toggleCartModal = function() {
+    const modal = document.getElementById("cart-modal");
+    modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+}
+
+// YENİ: Gerçek Sipariş Tamamlama
+window.checkout = async function() {
+    if(shoppingCart.length === 0) { alert("Sepetiniz boş!"); return; }
+    if(!currentUser) { alert("Siparişi tamamlamak için lütfen önce Hesabınıza giriş yapın."); return; }
+    
+    const total = shoppingCart.reduce((sum, i) => sum + (i.qty * i.price), 0);
+    
+    const { error } = await _supabase.from('orders').insert({
+        user_id: currentUser.id,
+        items: shoppingCart,
+        total_price: total
+    });
+
+    if(!error) {
+        alert("Siparişiniz başarıyla alındı! Geçmiş siparişlerinizden takip edebilirsiniz.");
+        shoppingCart = [];
+        updateCartUI();
+        toggleCartModal();
+    } else {
+        alert("Hata oluştu: " + error.message);
+    }
+}
+
+async function fetchUserOrders() {
+    const { data, error } = await _supabase.from('orders').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    const list = document.getElementById("user-orders-list");
+    if(data && data.length > 0) {
+        list.innerHTML = data.map(o => `
+            <div style="border-bottom:1px solid #ccc; padding:8px 0;">
+                <span style="color:var(--blue); font-weight:bold;">Sipariş #${o.id}</span> - ${parseFloat(o.total_price).toFixed(2)} TL<br>
+                <span style="font-size:11px; color:var(--orange);">Durum: ${o.status}</span>
+            </div>
+        `).join('');
+    } else {
+        list.innerHTML = "Henüz siparişiniz bulunmuyor.";
+    }
 }
 
 // ==========================================
@@ -320,13 +367,9 @@ function updateTablesByStatus(stocks, isAdmin) {
     const lowBody = document.querySelector("#table-low tbody");
     const defectiveBody = document.querySelector("#table-defective tbody");
 
-    if (healthyBody) healthyBody.innerHTML = ""; 
-    if (lowBody) lowBody.innerHTML = ""; 
-    if (defectiveBody) defectiveBody.innerHTML = "";
+    if (healthyBody) healthyBody.innerHTML = ""; if (lowBody) lowBody.innerHTML = ""; if (defectiveBody) defectiveBody.innerHTML = "";
 
-    let healthyTotals = { buy: 0, sell: 0 }; 
-    let lowTotals = { buy: 0, sell: 0 }; 
-    let defectiveTotals = { buy: 0, sell: 0 };
+    let healthyTotals = { buy: 0, sell: 0 }; let lowTotals = { buy: 0, sell: 0 }; let defectiveTotals = { buy: 0, sell: 0 };
     const role = localStorage.getItem("erdem_bilisim_locked_role");
 
     stocks.forEach(stock => {
@@ -353,10 +396,10 @@ function updateTablesByStatus(stocks, isAdmin) {
                 <td>${stock.barcode === "Müşteri Arzı" ? `<span style="color:var(--orange); font-weight:bold;">DIŞ ARZ</span>` : stock.barcode}</td> 
                 <td><strong>${stock.brand_name}</strong></td> <td>${capFormat}</td> <td><strong>${stock.model}"</strong></td>
                 <td><span id="stock-count-${stock.id}" style="font-weight:bold;">${count}</span></td>
-                <td style="color:var(--green);"><div id="display-ALICI-${stock.id}">${parsedOffers.buyer} <button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'ALICI')">✍️</button></div><div id="edit-ALICI-${stock.id}" style="display:none; gap:5px;"><input type="text" id="input-ALICI-${stock.id}" value="${parsedOffers.buyer}" style="padding:4px; max-width:80px;"><button onclick="submitInlineOffer(${stock.id}, 'ALICI')">✔️</button></div></td>
+                <td style="color:var(--green);"><div id="display-ALICI-${stock.id}">${parsedOffers.buyer} <button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'ALICI')">✍️</button></div><div id="edit-ALICI-${stock.id}" style="display:none; gap:5px;"><input type="text" id="input-ALICI-${stock.id}" value="${parsedOffers.buyer}"><button onclick="submitInlineOffer(${stock.id}, 'ALICI')">✔️</button></div></td>
                 <td style="color:var(--orange);">${parsedOffers.seller}</td>
-                <td style="color:var(--blue);"><div id="display-ALIS-${stock.id}"><strong>${buyPrice.toFixed(2)} TL</strong> <button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'ALIS')">✍️</button></div><div id="edit-ALIS-${stock.id}" style="display:none; gap:5px;"><input type="number" id="input-ALIS-${stock.id}" value="${buyPrice}" style="padding:4px; max-width:80px;"><button onclick="submitDirectPrice(${stock.id}, 'ALIS')">✔️</button></div></td>
-                <td style="color:var(--green);"><div id="display-SATIS-${stock.id}"><strong>${sellPrice.toFixed(2)} TL</strong> <button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'SATIS')">✍️</button></div><div id="edit-SATIS-${stock.id}" style="display:none; gap:5px;"><input type="number" id="input-SATIS-${stock.id}" value="${sellPrice}" style="padding:4px; max-width:80px;"><button onclick="submitDirectPrice(${stock.id}, 'SATIS')">✔️</button></div></td>
+                <td style="color:var(--blue);"><div id="display-ALIS-${stock.id}"><strong>${buyPrice.toFixed(2)} TL</strong> <button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'ALIS')">✍️</button></div><div id="edit-ALIS-${stock.id}" style="display:none; gap:5px;"><input type="number" id="input-ALIS-${stock.id}" value="${buyPrice}"><button onclick="submitDirectPrice(${stock.id}, 'ALIS')">✔️</button></div></td>
+                <td style="color:var(--green);"><div id="display-SATIS-${stock.id}"><strong>${sellPrice.toFixed(2)} TL</strong> <button class="btn-edit-offer" onclick="showInlineInput(${stock.id}, 'SATIS')">✍️</button></div><div id="edit-SATIS-${stock.id}" style="display:none; gap:5px;"><input type="number" id="input-SATIS-${stock.id}" value="${sellPrice}"><button onclick="submitDirectPrice(${stock.id}, 'SATIS')">✔️</button></div></td>
                 <td>${totalBuyRow.toFixed(2)} TL</td>
                 <td><button class="btn-action btn-plus" onclick="changeStockInCloud(${stock.id}, 1)">+</button><button class="btn-action btn-minus" onclick="changeStockInCloud(${stock.id}, -1)">-</button><button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">Sil</button></td>
             `;
@@ -364,7 +407,7 @@ function updateTablesByStatus(stocks, isAdmin) {
             row.innerHTML = `
                 <td>${stock.barcode}</td> <td><strong>${stock.brand_name}</strong></td> <td>${capFormat}</td> <td><strong>${stock.model}"</strong></td> <td><strong>${count}</strong></td>
                 <td style="color:var(--text-muted);">🔒 Gizli</td> <td style="color:var(--orange);"><strong>${buyPrice.toFixed(2)} TL</strong></td> <td style="color:var(--orange); font-size:12px;">Arzınız: <strong>${parsedOffers.seller}</strong></td>
-                <td>${stock.barcode === "Müşteri Arzı" ? `<button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">İptal Et</button>` : `<div id="display-SATICI-${stock.id}"><button class="btn-action" style="background:var(--orange); color:white; border-radius:4px; border:none; padding:5px 10px;" onclick="showInlineInput(${stock.id}, 'SATICI')">Fiyat Ver</button></div><div id="edit-SATICI-${stock.id}" style="display:none; gap:5px;"><input type="text" id="input-SATICI-${stock.id}" placeholder="Adet/Fiyat" style="padding:4px; max-width:100px;"><button onclick="submitInlineOffer(${stock.id}, 'SATICI')">✔️</button></div>`}</td>
+                <td>${stock.barcode === "Müşteri Arzı" ? `<button class="btn-action btn-delete" onclick="deleteStockFromCloud(${stock.id})">İptal Et</button>` : `<div id="display-SATICI-${stock.id}"><button class="btn-action" style="background:var(--orange); color:white;" onclick="showInlineInput(${stock.id}, 'SATICI')">Fiyat Ver</button></div><div id="edit-SATICI-${stock.id}" style="display:none; gap:5px;"><input type="text" id="input-SATICI-${stock.id}" placeholder="Adet/Fiyat"><button onclick="submitInlineOffer(${stock.id}, 'SATICI')">✔️</button></div>`}</td>
             `;
         }
         if (currentStatus === "%100" || currentStatus === "Sağlıklı") { if(healthyBody) healthyBody.appendChild(row); }
@@ -373,14 +416,9 @@ function updateTablesByStatus(stocks, isAdmin) {
     });
 
     if (isAdmin) {
-        addCategoryTotalRow(healthyBody, healthyTotals); 
-        addCategoryTotalRow(lowBody, lowTotals); 
-        addCategoryTotalRow(defectiveBody, defectiveTotals);
-        
-        const grandBuy = document.getElementById("grand-buy-value");
-        const grandSell = document.getElementById("grand-sell-value");
-        if(grandBuy) grandBuy.innerText = (healthyTotals.buy + lowTotals.buy + defectiveTotals.buy).toFixed(2);
-        if(grandSell) grandSell.innerText = (healthyTotals.sell + lowTotals.sell + defectiveTotals.sell).toFixed(2);
+        addCategoryTotalRow(healthyBody, healthyTotals); addCategoryTotalRow(lowBody, lowTotals); addCategoryTotalRow(defectiveBody, defectiveTotals);
+        document.getElementById("grand-buy-value").innerText = (healthyTotals.buy + lowTotals.buy + defectiveTotals.buy).toFixed(2);
+        document.getElementById("grand-sell-value").innerText = (healthyTotals.sell + lowTotals.sell + defectiveTotals.sell).toFixed(2);
     }
 }
 
@@ -394,12 +432,7 @@ function addCategoryTotalRow(tbody, totals) {
 // ==========================================
 // 7. YÖNETİCİ & SATICI İŞLEM FONKSİYONLARI
 // ==========================================
-window.showInlineInput = function(id, role) { 
-    const displayEl = document.getElementById(`display-${role}-${id}`);
-    const editEl = document.getElementById(`edit-${role}-${id}`);
-    if(displayEl) displayEl.style.display = "none"; 
-    if(editEl) editEl.style.display = "flex"; 
-}
+window.showInlineInput = function(id, role) { document.getElementById(`display-${role}-${id}`).style.display = "none"; document.getElementById(`edit-${role}-${id}`).style.display = "flex"; }
 
 window.submitInlineOffer = async function(id, role) {
     const isAdmin = (new URLSearchParams(window.location.search).get('mod') === 'ahmet');
@@ -407,63 +440,32 @@ window.submitInlineOffer = async function(id, role) {
     const parsed = parseOfferNotes(stockItem.offer_notes);
     const inputVal = document.getElementById(`input-${role}-${id}`).value.trim() || "Yok";
     if (role === 'ALICI') parsed.buyer = inputVal; else if (role === 'SATICI') parsed.seller = inputVal;
-    
-    try {
-        const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { 
-            method: "PATCH", 
-            headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, 
-            body: JSON.stringify({ offer_notes: `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller}` }) 
-        });
-        if(response.ok) {
-            showToast("Teklif başarıyla güncellendi.", "success");
-            fetchStocksFromCloud(isAdmin);
-        }
-    } catch(e) { showToast("Teklif güncellenemedi!", "error"); }
+    await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { method: "PATCH", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ offer_notes: `ALICI: ${parsed.buyer} || SATICI: ${parsed.seller}` }) });
+    fetchStocksFromCloud(isAdmin);
 }
 
 window.submitDirectPrice = async function(id, type) {
     const inputVal = parseFloat(document.getElementById(`input-${type}-${id}`).value || 0);
     let payload = type === 'ALIS' ? { price: inputVal } : { sale_price: inputVal };
-    try {
-        const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { 
-            method: "PATCH", 
-            headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, 
-            body: JSON.stringify(payload) 
-        });
-        if(response.ok) {
-            showToast("Fiyat başarıyla güncellendi.", "success");
-            fetchStocksFromCloud(true);
-        }
-    } catch(e) { showToast("Fiyat güncellenemedi!", "error"); }
+    await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { method: "PATCH", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    fetchStocksFromCloud(true);
 }
 
 window.submitNewOfferFromSeller = async function(event) {
     event.preventDefault();
     const offerNotes = `ALICI: Yok || SATICI: ${document.getElementById("offer-count").value} Adet - İstenen Fiyat/Tel: ${document.getElementById("offer-price").value}`;
-    try {
-        const response = await fetch(`${SUPABASE_URL}/stocks`, {
-            method: "POST", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ barcode: "Müşteri Arzı", brand_name: document.getElementById("offer-brand").value, capacity_gb: parseInt(document.getElementById("offer-capacity").value), model: document.getElementById("offer-inch").value, stock_count: 0, price: 0, sale_price: 0, offer_notes: offerNotes, status: document.getElementById("offer-status").value })
-        });
-        if(response.ok) {
-            document.getElementById("customer-offer-form").reset(); 
-            showToast("Teklif dükkan yönetimine iletildi abim.", "success"); 
-            fetchStocksFromCloud(false);
-        }
-    } catch(e) { showToast("Teklif iletilemedi!", "error"); }
+    await fetch(`${SUPABASE_URL}/stocks`, {
+        method: "POST", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ barcode: "Müşteri Arzı", brand_name: document.getElementById("offer-brand").value, capacity_gb: parseInt(document.getElementById("offer-capacity").value), model: document.getElementById("offer-inch").value, stock_count: 0, price: 0, sale_price: 0, offer_notes: offerNotes, status: document.getElementById("offer-status").value })
+    });
+    document.getElementById("customer-offer-form").reset(); alert("Teklif dükkan yönetimine iletildi abim."); fetchStocksFromCloud(false);
 }
 
 window.changeStockInCloud = async function(id, amount) {
     let current = parseInt(document.getElementById(`stock-count-${id}`).innerText);
     let newStock = current + amount; if (newStock < 0) newStock = 0;
     document.getElementById(`stock-count-${id}`).innerText = newStock;
-    try {
-        await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { 
-            method: "PATCH", 
-            headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, 
-            body: JSON.stringify({ stock_count: newStock }) 
-                });
-    } catch(e) { showToast("Stok güncellenirken hata oluştu!", "error"); }
+    await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { method: "PATCH", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ stock_count: newStock }) });
 }
 
 window.addNewStock = async function(event) {
@@ -471,39 +473,27 @@ window.addNewStock = async function(event) {
     const imgEl = document.getElementById("prod-image-url");
     const customImageUrl = imgEl ? imgEl.value.trim() : "";
 
-    try {
-        const response = await fetch(`${SUPABASE_URL}/stocks`, {
-            method: "POST", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                barcode: document.getElementById("prod-barcode").value, brand_name: document.getElementById("prod-brand").value,
-                capacity_gb: parseInt(document.getElementById("prod-capacity").value), model: document.getElementById("prod-inch").value, 
-                stock_count: parseInt(document.getElementById("prod-stock").value), price: parseFloat(document.getElementById("prod-price").value || 0),
-                sale_price: parseFloat(document.getElementById("prod-sale-price").value || 0), offer_notes: "ALICI: Yok || SATICI: Yok", 
-                status: document.getElementById("prod-status").value, image_url: customImageUrl
-            })
-        });
-        if(response.ok) {
-            document.getElementById("add-stock-form").reset(); 
-            showToast("Yeni ürün başarıyla eklendi.", "success");
-            fetchStocksFromCloud(true);
-        }
-    } catch(e) { showToast("Ürün eklenirken hata oluştu!", "error"); }
+    await fetch(`${SUPABASE_URL}/stocks`, {
+        method: "POST", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+            barcode: document.getElementById("prod-barcode").value, brand_name: document.getElementById("prod-brand").value,
+            capacity_gb: parseInt(document.getElementById("prod-capacity").value), model: document.getElementById("prod-inch").value, 
+            stock_count: parseInt(document.getElementById("prod-stock").value), price: parseFloat(document.getElementById("prod-price").value || 0),
+            sale_price: parseFloat(document.getElementById("prod-sale-price").value || 0), offer_notes: "ALICI: Yok || SATICI: Yok", 
+            status: document.getElementById("prod-status").value, image_url: customImageUrl
+        })
+    });
+    document.getElementById("add-stock-form").reset(); fetchStocksFromCloud(true);
 }
 
 window.deleteStockFromCloud = async function(id) {
-    if(!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
     const isAdmin = (new URLSearchParams(window.location.search).get('mod') === 'ahmet');
-    try {
-        const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { method: "DELETE", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } });
-        if(response.ok) {
-            showToast("Ürün veritabanından silindi.", "success");
-            fetchStocksFromCloud(isAdmin);
-        }
-    } catch(e) { showToast("Ürün silinemedi!", "error"); }
+    await fetch(`${SUPABASE_URL}/stocks?id=eq.${id}`, { method: "DELETE", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } });
+    fetchStocksFromCloud(isAdmin);
 }
 
 // ==========================================
-// 8. BARKOD VE GELİŞMİŞ RAPORLAMA (SUPABASE ENTEGRELİ)
+// 8. BARKOD OKUTMA VE DİNAMİK RAPORLAMA SİSTEMİ
 // ==========================================
 window.barcodeSaleStockDrop = async function(event) {
     event.preventDefault();
@@ -513,127 +503,143 @@ window.barcodeSaleStockDrop = async function(event) {
     if (!scannedBarcode) return;
 
     const matchedStock = globalStocks.find(s => s.barcode && s.barcode.trim() === scannedBarcode);
-    if (!matchedStock || parseInt(matchedStock.stock_count || 0) <= 0) { showToast("Stokta yok veya barkod hatalı", "error"); barcodeInput.value = ""; return; }
+    if (!matchedStock || parseInt(matchedStock.stock_count || 0) <= 0) { barcodeInput.value = ""; barcodeInput.focus(); return; }
 
     let newStockCount = parseInt(matchedStock.stock_count) - 1;
     const response = await fetch(`${SUPABASE_URL}/stocks?id=eq.${matchedStock.id}`, { method: "PATCH", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ stock_count: newStockCount }) });
 
     if (response.ok) {
-        await saveSaleToCloud(scannedBarcode, matchedStock.brand_name, targetSession, parseFloat(matchedStock.sale_price || 0));
-        barcodeInput.value = ""; 
-        fetchStocksFromCloud(true); 
-        showToast("Satış onaylandı ve buluta kaydedildi!", "success");
+        let capFormat = parseInt(matchedStock.capacity_gb) >= 1000 ? (parseInt(matchedStock.capacity_gb)/1000 + "TB") : (matchedStock.capacity_gb + "GB");
+        // YENİ: BI hesaplamaları için Maliyet fiyatını ve Ürün tipini de kaydediyoruz
+        saveSaleToSessionLogs(scannedBarcode, matchedStock.brand_name, `${capFormat} ${matchedStock.model}"`, targetSession, parseFloat(matchedStock.sale_price || 0), parseFloat(matchedStock.price || 0), matchedStock.model);
+        barcodeInput.value = ""; barcodeInput.focus();
+        fetchStocksFromCloud(true); renderReportTabs(); 
     }
 }
 
-async function saveSaleToCloud(barcode, brand, sessionName, salePrice) {
-    const saleDate = new Date().toLocaleDateString('tr-TR');
-    await fetch(`${SUPABASE_URL}/sales_logs`, {
-        method: "POST", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ barcode: barcode, title: brand, session_name: sessionName, sale_count: 1, price: salePrice, sale_date: saleDate })
-    });
-    await fetchSalesLogsFromCloud(); 
-}
-
-window.fetchSalesLogsFromCloud = async function() {
-    const response = await fetch(`${SUPABASE_URL}/sales_logs?select=*`, {
-        method: "GET", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
-    });
-    if (response.ok) {
-        globalSalesLogs = await response.json();
-        renderReportTabs();
+function saveSaleToSessionLogs(barcode, brand, desc, sessionName, salePrice, buyPrice, productType) {
+    let allSales = JSON.parse(localStorage.getItem("erdem_bilisim_sales_logs")) || [];
+    let existingIndex = allSales.findIndex(s => s.barcode === barcode && s.session === sessionName);
+    if (existingIndex > -1) {
+        allSales[existingIndex].count += 1;
+    } else {
+        allSales.push({ 
+            barcode, title: `${brand} ${desc}`, session: sessionName, count: 1, 
+            price: salePrice, buy_price: buyPrice, product_type: productType,
+            date: new Date().toLocaleDateString('tr-TR')
+        });
     }
+    localStorage.setItem("erdem_bilisim_sales_logs", JSON.stringify(allSales));
 }
 
 function renderReportTabs() {
     const tabsContainer = document.getElementById("dynamic-report-tabs");
     if (!tabsContainer) return;
-    
-    drawChart(globalSalesLogs); 
-
-    let sessions = [...new Set(globalSalesLogs.map(s => s.session_name))];
+    let allSales = JSON.parse(localStorage.getItem("erdem_bilisim_sales_logs")) || [];
+    let sessions = [...new Set(allSales.map(s => s.session))];
     if (sessions.length === 0) sessions = ["Satış 1"];
     if (!sessions.includes(currentActiveReportTab)) currentActiveReportTab = sessions[0];
 
     tabsContainer.innerHTML = "";
     sessions.forEach(sessionName => {
         const btn = document.createElement("button");
-        btn.style = sessionName === currentActiveReportTab ? "background:var(--blue); color:white;" : "background:var(--border-color); color:var(--text-main);";
-        btn.style.padding = "8px 15px"; btn.style.borderRadius = "6px"; btn.style.border = "none"; btn.style.cursor = "pointer";
+        btn.className = `tab-btn ${sessionName === currentActiveReportTab ? "active" : ""}`;
         btn.innerText = sessionName;
         btn.onclick = () => { currentActiveReportTab = sessionName; renderReportTabs(); };
         tabsContainer.appendChild(btn);
     });
-    renderSalesReport(globalSalesLogs);
+    renderSalesReport();
+    calculateBusinessIntelligence(); // YENİ: Her satışta BI Panelini Güncelle
 }
 
-function renderSalesReport(allSales) {
+function renderSalesReport() {
     const tbody = document.getElementById("reports-tbody");
-    let filtered = allSales.filter(s => s.session_name === currentActiveReportTab);
-    tbody.innerHTML = ""; let totalRev = 0;
+    if (!tbody) return;
+    let allSales = JSON.parse(localStorage.getItem("erdem_bilisim_sales_logs")) || [];
+    let filteredSales = allSales.filter(s => s.session === currentActiveReportTab);
     
-    let grouped = {};
-    filtered.forEach(s => {
-        if(!grouped[s.barcode]) grouped[s.barcode] = {...s};
-        else grouped[s.barcode].sale_count += 1;
+    if (filteredSales.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="color:var(--text-muted); text-align:center;">Bu oturumda satış yok.</td></tr>`; return; }
+    
+    tbody.innerHTML = ""; let totalSessionRevenue = 0;
+    filteredSales.forEach(sale => {
+        const rowTotal = sale.count * sale.price; totalSessionRevenue += rowTotal;
+        tbody.innerHTML += `<tr><td style="font-family: monospace;">${sale.barcode}</td> <td>${sale.title}</td> <td><span style="background:var(--blue); color:white; padding:4px 8px; border-radius:4px; font-size:12px;">${sale.session}</span></td> <td><strong>${sale.count} Adet</strong></td> <td>${sale.price.toFixed(2)} TL</td> <td style="color:var(--green); font-weight:bold;">${rowTotal.toFixed(2)} TL</td></tr>`;
     });
-
-    Object.values(grouped).forEach(sale => {
-        let rowTotal = sale.sale_count * sale.price; totalRev += rowTotal;
-        tbody.innerHTML += `<tr><td>${sale.barcode}</td> <td>${sale.title}</td> <td>${sale.session_name}</td> <td>${sale.sale_count}</td> <td>${sale.price} TL</td> <td style="color:var(--green);">${rowTotal} TL</td></tr>`;
-    });
-    tbody.innerHTML += `<tr class="total-row"><td colspan="5" style="text-align:right;">Toplam:</td><td style="color:var(--green);">${totalRev} TL</td></tr>`;
+    tbody.innerHTML += `<tr style="background:#f0f2f5; font-weight:bold;"><td colspan="5" style="text-align:right;">Oturum Toplamı:</td><td style="color:var(--green); font-size:16px;">${totalSessionRevenue.toFixed(2)} TL</td></tr>`;
 }
 
-function drawChart(salesData) {
-    const ctx = document.getElementById('salesChart');
-    if(!ctx) return;
-    
-    let sessionTotals = {};
-    salesData.forEach(sale => {
-        if(!sessionTotals[sale.session_name]) sessionTotals[sale.session_name] = 0;
-        sessionTotals[sale.session_name] += (sale.sale_count * sale.price);
-    });
-
-    const isDark = document.body.classList.contains('dark-theme');
-    const textColor = isDark ? '#e4e6eb' : '#1c1e21';
-
-    if(salesChartInstance) salesChartInstance.destroy();
-
-    salesChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(sessionTotals),
-            datasets: [{ label: 'Oturum Cirosu (TL)', data: Object.values(sessionTotals), backgroundColor: '#1877f2', borderRadius: 6 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } }, scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor } } } }
-    });
+window.clearSalesLogs = function() {
+    if(confirm("Tüm oturumların rapor geçmişi silinecek, emin misin? (Stoklar etkilenmez)")) {
+        localStorage.removeItem("erdem_bilisim_sales_logs");
+        currentActiveReportTab = "Satış 1"; document.getElementById("active-sale-session").value = "Satış 1";
+        renderReportTabs();
+    }
 }
 
-window.exportReportsToCSV = function() {
-    if(globalSalesLogs.length === 0) { showToast("Dışa aktarılacak veri yok.", "error"); return; }
+// ==========================================
+// YENİ: 9. İŞLETME ZEKASI (BI) MOTORU
+// ==========================================
+window.calculateBusinessIntelligence = function() {
+    let allSales = JSON.parse(localStorage.getItem("erdem_bilisim_sales_logs")) || [];
+    const todayStr = new Date().toLocaleDateString('tr-TR');
     
-    let csvContent = "data:text/csv;charset=utf-8,Barkod,Urun,Oturum,Adet,BirimFiyat,Tarih\n";
-    globalSalesLogs.forEach(row => {
-        csvContent += `${row.barcode},${row.title},${row.session_name},${row.sale_count},${row.price},${row.sale_date}\n`;
+    let dailyProfit = 0;
+    let weeklyTurnover = 0;
+    let brandSales = {};
+    let typeProfit = {};
+
+    allSales.forEach(sale => {
+        const count = sale.count || 1;
+        const salePrice = parseFloat(sale.price || 0);
+        const buyPrice = parseFloat(sale.buy_price || 0);
+        const profit = (salePrice - buyPrice) * count;
+        const saleDate = sale.date || todayStr;
+
+        if(saleDate === todayStr) { dailyProfit += profit; }
+        weeklyTurnover += (salePrice * count);
+
+        // Marka Bazlı Satış Hesaplama
+        let brandName = sale.title.split(' ')[0] || "Diğer";
+        brandSales[brandName] = (brandSales[brandName] || 0) + count;
+
+        // Ürün Tipi Karlılığı
+        let pType = sale.product_type || "Bilinmiyor";
+        typeProfit[pType] = (typeProfit[pType] || 0) + profit;
     });
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "satis_raporu.csv");
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    showToast("Excel dosyası indirildi!", "success");
-}
+    // 1. Kâr ve Ciro Güncellemesi
+    document.getElementById("bi-daily-profit").innerText = dailyProfit.toFixed(2) + " TL";
+    document.getElementById("bi-weekly-turnover").innerText = weeklyTurnover.toFixed(2) + " TL";
 
-window.clearSalesLogs = async function() {
-    if(confirm("Tüm satış geçmişi Supabase veritabanından kalıcı olarak silinecek. Emin misin?")) {
-        try {
-            await fetch(`${SUPABASE_URL}/sales_logs?id=gt.0`, { method: "DELETE", headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } });
-            globalSalesLogs = [];
-            currentActiveReportTab = "Satış 1"; document.getElementById("active-sale-session").value = "Satış 1";
-            renderReportTabs();
-            showToast("Tüm satış verileri veritabanından temizlendi.", "success");
-        } catch(e) { showToast("Veriler silinirken hata oluştu!", "error"); }
+    // 2. En Çok Satan Marka
+    let topBrand = "---"; let maxBrandVal = 0;
+    for(let b in brandSales) if(brandSales[b] > maxBrandVal) { maxBrandVal = brandSales[b]; topBrand = b; }
+    document.getElementById("bi-top-brand").innerText = topBrand;
+
+    // 3. En Kârlı Ürün Tipi
+    let topType = "---"; let maxTypeVal = -99999;
+    for(let t in typeProfit) if(typeProfit[t] > maxTypeVal) { maxTypeVal = typeProfit[t]; topType = t; }
+    document.getElementById("bi-top-type").innerText = topType;
+
+    // 4. Stok Analizi (Sağlık ve Bekleme Süresi)
+    if (globalStocks.length > 0) {
+        let totalHealth = 0; let totalWaiting = 0; let activeCount = 0;
+        globalStocks.forEach(s => {
+            if (s.stock_count > 0) {
+                activeCount++;
+                const status = s.status || "%100";
+                if (status.includes("%100") || status === "Sağlıklı") totalHealth += 100;
+                else if (status.includes("Düşük")) totalHealth += 50;
+                
+                if (s.created_at) {
+                    const days = Math.floor((new Date() - new Date(s.created_at)) / (1000 * 60 * 60 * 24));
+                    totalWaiting += (days >= 0 ? days : 0);
+                }
+            }
+        });
+        if (activeCount > 0) {
+            document.getElementById("bi-avg-health").innerText = "%" + Math.round(totalHealth / activeCount);
+            document.getElementById("bi-avg-waiting").innerText = Math.round(totalWaiting / activeCount) + " Gün";
+        }
     }
 }
