@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erdem Bilişim - Pazaryeri ve Stok Sistemi</title>
+    <title>Erdem Bilişim - E-Ticaret ve Stok Sistemi</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* FERAH VE MODERN TEMA DEĞİŞKENLERİ */
+        /* FERAH VE MODERN TEMA DEĞİŞKENLERİ (Orijinal CSS'in tamamen korundu) */
         :root {
             --bg-main: #f0f2f5; --bg-card: #ffffff; --border-color: #e4e6eb; --text-main: #1c1e21; --text-muted: #65676b;
             --blue: #1877f2; --green: #31a24c; --orange: #f56b2a; --red: #e41e3f; --shadow: 0 2px 12px rgba(0,0,0,0.08);
@@ -16,40 +15,72 @@
             --bg-main: #18191a; --bg-card: #242526; --border-color: #3e4042; --text-main: #e4e6eb; --text-muted: #b0b3b8;
             --shadow: 0 2px 12px rgba(0,0,0,0.3);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; transition: background-color 0.3s, color 0.3s; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.3s, color 0.3s; }
         body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; font-size: 14px; }
+
         header { background-color: var(--bg-card); padding: 15px 20px; border-radius: 10px; box-shadow: var(--shadow); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         h1, h2, h3 { color: var(--text-main); }
+        
         .cart-btn { background-color: var(--green); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 16px; border: none; cursor: pointer; transition: 0.2s; }
         .cart-btn:hover { background-color: #288a3e; }
+        .cart-count { background: white; color: var(--green); padding: 2px 8px; border-radius: 20px; font-size: 14px; }
+
         .panel-block { background-color: var(--bg-card); padding: 20px; border-radius: 10px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border-color); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
-        input, select, textarea { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #fafbfc; color: var(--text-main); outline: none; width: 100%; font-size: 14px; }
-        input:focus, select:focus { border-color: var(--blue); background-color: var(--bg-card); }
-        button { background-color: var(--blue); color: white; font-weight: bold; cursor: pointer; border: none; padding: 10px; border-radius: 8px; }
+        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #fafbfc; color: var(--text-main); outline: none; width: 100%; font-size: 14px; }
+        input:focus, select:focus { border-color: var(--blue); background-color: #fff; }
+        button { background-color: var(--blue); color: white; font-weight: bold; cursor: pointer; border: none; }
         button:hover { opacity: 0.9; }
+
+        .storefront-title { margin-bottom: 15px; border-bottom: 2px solid var(--blue); padding-bottom: 10px; display: inline-block;}
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-        .product-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
+        .product-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s; }
+        .product-card:hover { transform: translateY(-3px); border-color: var(--blue); }
         .product-img { width: 100%; height: 160px; object-fit: contain; border-radius: 8px; margin-bottom: 5px; background: white; padding: 5px; }
         .prod-brand { font-size: 18px; font-weight: bold; color: var(--blue); }
+        .prod-specs { font-size: 13px; color: var(--text-muted); }
         .prod-price { font-size: 20px; font-weight: bold; color: var(--green); margin-top: auto; }
+        .btn-add-cart { background-color: var(--blue); color: white; border-radius: 6px; padding: 10px; text-align: center; width: 100%; margin-top: 10px; }
+
         .table-responsive { overflow-x: auto; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; color: var(--text-main); }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; }
-        th { background-color: var(--bg-main); font-weight: bold; }
-        .generic-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
-        .generic-content { background: var(--bg-card); padding: 20px; border-radius: 12px; width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; }
+        th { background-color: #f0f2f5; color: var(--text-muted); font-weight: bold; }
+        tr:hover { background-color: #f8fafc; }
         
-        .bi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .btn-action { padding: 6px 10px; width: auto; margin: 2px; font-size: 12px;}
+        .btn-plus { background-color: var(--green); color: white; }
+        .btn-minus { background-color: var(--orange); color: white; }
+        .btn-delete { background-color: var(--red); color: white; }
+        .btn-edit-offer { background: #65676b; color: white; font-size: 11px; padding: 2px 6px; width: auto; border-radius: 4px;}
+        .total-row { background-color: #f0f2f5; font-weight: bold; }
+
+        /* MODAL VE BİLDİRİM (TOAST) CSS */
+        .generic-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .generic-content { background: var(--bg-card); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        
+        #cart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .cart-content { background: var(--bg-card); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        .cart-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding: 10px 0; }
+        .cart-total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; color: var(--green); }
+        .btn-close-cart { background: var(--text-muted); margin-top: 15px;}
+        .btn-checkout { background: var(--green); margin-top: 10px; font-size: 16px;}
+
+        .tab-system { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab-btn { background: #e4e6eb; color: var(--text-main); width: auto; padding: 8px 16px; border-radius: 6px; }
+        .tab-btn.active { background: var(--blue); color: white; }
+
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 20px; border-radius: 8px; box-shadow: var(--shadow); border-left: 4px solid var(--blue); animation: slideIn 0.3s ease-out forwards; display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-color); }
+        .toast.success { border-left-color: var(--green); } .toast.error { border-left-color: var(--red); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* BI DASHBOARD GRID */
+        .bi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .bi-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; text-align: center; border-top: 4px solid var(--blue); }
         .bi-card h4 { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
         .bi-card p { font-size: 20px; font-weight: bold; color: var(--text-main); }
-        
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--blue); box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; }
-        
-        .admin-nav { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:15px; }
-        .admin-nav button { flex: 1; min-width: 150px; }
     </style>
 </head>
 <body>
@@ -59,13 +90,13 @@
             <h2 style="color: var(--blue);">ERDEM BİLİŞİM</h2>
             <p style="color: var(--text-muted); font-size:12px;" id="live-status-indicator">🟢 Canlı Sistem Aktif</p>
         </div>
-        <div id="admin-status-badge" style="display:none; color:var(--blue); font-weight:bold; border: 1px solid var(--blue); padding: 5px 10px; border-radius: 4px;">⚡ YÖNETİCİ MODU</div>
+        <div id="admin-status-badge" style="display:none; color:var(--blue); font-weight:bold; border: 1px solid var(--blue); padding: 5px 10px; border-radius: 4px;">⚡ YÖNETİCİ MODU AKTİF</div>
         
-        <div style="display:flex; gap:10px; align-items:center;">
-            <button class="cart-btn" onclick="toggleTheme()" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main);">🌙</button>
-            <button class="cart-btn" id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" style="background-color: var(--blue);">👤 Giriş Yap</button>
-            <button class="cart-btn" id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" style="display:none; background-color: var(--orange);">🛍️ Hesabım</button>
-            <button class="cart-btn" id="header-cart-btn" onclick="toggleGenericModal('cart-modal')">🛒 Sepetim <span id="header-cart-count" style="margin-left:5px; background:white; color:var(--green); padding:2px 8px; border-radius:20px; font-size:14px;">0</span></button>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="cart-btn" onclick="toggleTheme()" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); width:auto;">🌙</button>
+            <button class="cart-btn" id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" style="background-color: var(--blue); width:auto;">👤 Giriş Yap</button>
+            <button class="cart-btn" id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" style="display:none; background-color: var(--orange); width:auto;">🛍️ Hesabım</button>
+            <button class="cart-btn" id="header-cart-btn" onclick="toggleCartModal()">🛒 Sepetim <span class="cart-count" id="header-cart-count">0</span></button>
         </div>
     </header>
 
@@ -73,145 +104,112 @@
         <span style="font-weight: bold; color: var(--text-muted);">SİSTEMDEKİ ROLÜNÜZÜ SEÇİNİZ:</span>
         <div style="display: flex; gap: 20px; margin-top: 10px; flex-wrap: wrap;">
             <label style="cursor: pointer;"><input type="radio" name="user-role-radio" value="alici" checked onchange="handleRoleChange()"> 🛒 Ürün Almak İstiyorum</label>
-            <label style="cursor: pointer;"><input type="radio" name="user-role-radio" value="satici" onchange="handleRoleChange()"> 📦 Dükkana Ürün Satmak İstiyorum</label>
+            <label style="cursor: pointer;"><input type="radio" name="user-role-radio" value="satici" onchange="handleRoleChange()"> 📦 Ürün Satmak İstiyorum</label>
         </div>
     </div>
     
     <div id="customer-seller-panel" class="panel-block" style="display: none; border-left: 4px solid var(--orange);">
-        <h3 style="color: var(--orange);">📦 Dükkana Mal Arz Et / Pazarlık Başlat</h3>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Elinizdeki diski dükkana satmak için fiyat belirleyin. Dükkan onaylayabilir veya karşı teklif verebilir.</p>
+        <h3 style="color: var(--orange);">📦 Dükkana Mal Arz Et / Fiyat Teklifi Al</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Elinizdeki disk detaylarını girin. Yönetici inceleyip size özel dükkan alış fiyatı sunacaktır.</p>
         <form id="customer-offer-form" onsubmit="submitNewOfferFromSeller(event)">
             <div class="form-grid">
-                <select id="offer-brand" required><option value="" disabled selected>Marka Seç</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Toshiba">Toshiba</option><option value="Samsung">Samsung</option><option value="Kingston">Kingston</option><option value="Diğer">Diğer</option></select>
-                <select id="offer-capacity" required><option value="" disabled selected>Kapasite</option><option value="240">240 GB</option><option value="500">500 GB</option><option value="1000">1 TB</option></select>
-                <select id="offer-inch" required><option value="" disabled selected>Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2</option></select>
-                <input type="number" id="offer-count" placeholder="Adet" required>
-                <input type="number" step="0.01" id="offer-price" placeholder="İstediğiniz Fiyat (TL)" required>
-                <select id="offer-status"><option value="%100">%100 Sağlıklı</option><option value="Arızalı">Arızalı</option></select>
-                <button type="submit" style="background-color: var(--orange);">Teklifi Gönder</button>
+                <select id="offer-brand" required>
+                    <option value="" disabled selected>Marka Seç</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Toshiba">Toshiba</option><option value="Samsung">Samsung</option><option value="Kingston">Kingston</option><option value="SanDisk">SanDisk</option><option value="Diğer">Diğer</option>
+                </select>
+                <select id="offer-capacity" required>
+                    <option value="" disabled selected>Kapasite</option><option value="120">120 GB</option><option value="240">240 GB</option><option value="256">256 GB</option><option value="500">500 GB</option><option value="512">512 GB</option><option value="1000">1 TB</option><option value="2000">2 TB</option><option value="4000">4 TB</option><option value="8000">8 TB</option><option value="10000">10 TB</option>
+                </select>
+                <select id="offer-inch" required>
+                    <option value="" disabled selected>İnç / Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2 (SATA/NVMe)</option>
+                </select>
+                <input type="number" id="offer-count" placeholder="Kaç Adet Var?" required>
+                <input type="text" id="offer-price" placeholder="İstenen Fiyat ve Telefonunuz" required>
+                <select id="offer-status">
+                    <option value="%100">%100 (Kusursuz)</option><option value="Sağlığı Düşük">Sağlığı Düşük</option><option value="Arızalı">Arızalı</option>
+                </select>
+                <button type="submit" style="background-color: var(--orange);">🚀 Teklifi Gönder</button>
             </div>
         </form>
     </div>
 
     <div id="storefront-panel">
-        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-            <h2 style="border-bottom: 2px solid var(--blue); padding-bottom: 5px;">🔥 Canlı Vitrin</h2>
-            <input type="text" id="search-input" placeholder="🔍 Marka veya model ara..." oninput="filterStorefront()" style="width: auto; min-width: 200px;">
-        </div>
+        <h2 class="storefront-title">🔥 Öne Çıkan Fırsatlar</h2>
         <div class="products-grid" id="products-grid-container"></div>
     </div>
 
-    <div id="admin-main-menu" class="panel-block" style="display: none; border-left: 4px solid var(--blue); padding-top: 15px;">
-        
-        <div class="admin-nav">
-            <button style="background-color: var(--green);" onclick="switchAdminTab('stok')">🟢 Satıştaki Stoklar</button>
-            <button style="background-color: var(--orange);" onclick="switchAdminTab('pazarlik')">🤝 Gelen Pazarlıklar</button>
-            <button style="background-color: var(--blue);" onclick="switchAdminTab('satin-alinan')">📥 Satın Alınanlar</button>
-            <button style="background-color: var(--red);" onclick="switchAdminTab('rapor')">📊 Satılanlar & Rapor</button>
-        </div>
-
-        <div id="admin-tab-stok">
-            <h3 style="color: var(--blue); margin-top: 10px;">⚙️ Yeni Ürün Stoğu Tanımla (Manuel)</h3>
-            <form onsubmit="addNewStock(event)">
-                <div class="form-grid">
-                    <input type="text" id="prod-barcode" placeholder="Barkod No" required>
-                    <select id="prod-brand" required><option value="" disabled selected>Marka</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Samsung">Samsung</option></select>
-                    <select id="prod-capacity" required><option value="" disabled selected>Kapasite</option><option value="240">240 GB</option><option value="500">500 GB</option><option value="1000">1 TB</option></select>
-                    <select id="prod-inch" required><option value="" disabled selected>Tür</option><option value="2.5">2.5"</option><option value="M.2">M.2</option></select>
-                    <input type="number" id="prod-stock" placeholder="Adet" required>
-                    <input type="number" step="0.01" id="prod-price" placeholder="Alış Maliyeti" required>
-                    <input type="number" step="0.01" id="prod-sale-price" placeholder="Satış Fiyatı" required>
-                    <button type="submit">➕ Vitrine Ekle</button>
-                </div>
-            </form>
-
-            <h3 style="color: var(--green); margin-top: 20px;">⚡ Barkodlu Hızlı Satış</h3>
-            <form onsubmit="barcodeSaleStockDrop(event)" style="margin-bottom: 20px;">
-                <div style="display:flex; gap:15px; align-items: center; flex-wrap:wrap; margin-top:10px;">
-                    <input type="text" id="active-sale-session" value="Satış 1" style="width:150px; font-weight:bold; color:var(--blue);" required>
-                    <input type="text" id="scan-barcode-input" placeholder="Barkodu okutun ve Enter'a basın..." autofocus style="flex:1;">
-                </div>
-            </form>
-
-            <h3 style="color: var(--green);">🟢 STOK TABLOSU</h3>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Barkod</th><th>Marka</th><th>Kapasite</th><th>Tür</th><th>Stok</th><th>Maliyet</th><th>Satış</th><th>İşlemler</th></tr></thead>
-                    <tbody id="table-healthy-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="admin-tab-pazarlik" style="display:none;">
-            <h3 style="color: var(--orange);">🤝 Müşterilerden Gelen Satış Teklifleri</h3>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Müşterinin istediği fiyatı kabul edebilir veya yeni bir fiyat teklif edebilirsiniz. İkiniz de onayladığında ürün "Satın Alınanlar" sekmesine düşer.</p>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Müşteri ID</th><th>Ürün Bilgisi</th><th>Adet</th><th>Müşteri İstiyor</th><th>Senin Teklifin</th><th>Durum</th><th>İşlem</th></tr></thead>
-                    <tbody id="admin-pazarlik-tbody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="admin-tab-satin-alinan" style="display:none;">
-            <h3 style="color: var(--blue);">📥 Anlaşması Biten ve Dükkana Giren Mallar</h3>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Pazarlığı biten ürünler dükkanın envanterine girer. Vitrine koymak için ürüne Barkod ve Satış Fiyatı atayın.</p>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Ürün Bilgisi</th><th>Adet</th><th>Dükkana Maliyeti</th><th>Yeni Barkod Ata</th><th>Müşteri Satış Fiyatı</th><th>İşlem</th></tr></thead>
-                    <tbody id="admin-satin-alinan-tbody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="admin-tab-rapor" style="display:none;">
-            <div class="bi-grid" style="margin-bottom: 20px;">
-                <div class="bi-card" style="border-top-color: var(--green);"><h4>GÜNLÜK NET KÂR</h4><p id="bi-daily-profit">0.00 TL</p></div>
-                <div class="bi-card"><h4>HAFTALIK BRÜT CİRO</h4><p id="bi-weekly-turnover">0.00 TL</p></div>
-                <div class="bi-card" style="border-top-color: var(--orange);"><h4>EN ÇOK SATAN MARKA</h4><p id="bi-top-brand">---</p></div>
-            </div>
-            
-            <h3>📊 Otomatik Satış Raporları</h3>
-            <div id="dynamic-report-tabs" style="display:flex; gap:10px; margin: 15px 0;"></div>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Barkod</th><th>Ürün Bilgisi</th><th>Oturum</th><th>Adet</th><th>Fiyat</th><th>Toplam Ciro</th></tr></thead>
-                    <tbody id="reports-tbody"></tbody>
-                </table>
-            </div>
-            <button onclick="clearSalesLogs()" style="background-color: var(--red); margin-top: 15px; width: auto; padding: 8px 15px;">🗑️ Tüm Satış Geçmişini Temizle</button>
+    <div id="bi-dashboard-panel" class="panel-block" style="display: none; border-left: 4px solid var(--green);">
+        <h3 style="margin-bottom: 15px; color: var(--green);">📊 İşletme Zekası (BI) Analiz Paneli</h3>
+        <div class="bi-grid">
+            <div class="bi-card" style="border-top-color: var(--green);"><h4>GÜNLÜK NET KÂR</h4><p id="bi-daily-profit">0.00 TL</p></div>
+            <div class="bi-card"><h4>HAFTALIK BRÜT CİRO</h4><p id="bi-weekly-turnover">0.00 TL</p></div>
+            <div class="bi-card" style="border-top-color: var(--orange);"><h4>EN ÇOK SATAN MARKA</h4><p id="bi-top-brand">---</p></div>
         </div>
     </div>
 
-    <div id="user-panel-modal" class="generic-modal">
-        <div class="generic-content" style="max-width: 600px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
-                <h2>🛍️ Hesabım</h2>
-                <button onclick="toggleGenericModal('user-panel-modal')" style="background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;">✖</button>
+    <div id="admin-panel" class="panel-block" style="display: none; border-left: 4px solid var(--blue);">
+        <h3 style="color: var(--blue);">⚙️ YÖNETİCİ: Yeni Ürün Stoğu Tanımla</h3>
+        <form id="add-stock-form" onsubmit="addNewStock(event)">
+            <div class="form-grid">
+                <input type="text" id="prod-barcode" placeholder="Barkod No" required>
+                <select id="prod-brand" required>
+                    <option value="" disabled selected>Marka Seç</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Toshiba">Toshiba</option><option value="Samsung">Samsung</option><option value="Kingston">Kingston</option><option value="SanDisk">SanDisk</option><option value="Diğer">Diğer</option>
+                </select>
+                <select id="prod-capacity" required>
+                    <option value="" disabled selected>Kapasite</option><option value="120">120 GB</option><option value="240">240 GB</option><option value="256">256 GB</option><option value="500">500 GB</option><option value="512">512 GB</option><option value="1000">1 TB</option><option value="2000">2 TB</option><option value="4000">4 TB</option><option value="8000">8 TB</option><option value="10000">10 TB</option>
+                </select>
+                <select id="prod-inch" required>
+                    <option value="" disabled selected>İnç / Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2 (SATA/NVMe)</option>
+                </select>
+                <input type="number" id="prod-stock" placeholder="Stok Adedi" required>
+                <input type="number" step="0.01" id="prod-price" placeholder="Alış Maliyeti (TL)">
+                <input type="number" step="0.01" id="prod-sale-price" placeholder="Müşteri Satış Fiyatı (TL)" required>
+                <input type="text" id="prod-image-url" placeholder="Görsel Linki (Boş bırakırsan otomatik resim atar)">
+                <select id="prod-status">
+                    <option value="%100">%100 (Kusursuz)</option><option value="Sağlığı Düşük">Sağlığı Düşük</option><option value="Arızalı">Arızalı</option>
+                </select>
+                <button type="submit">➕ Ekle</button>
             </div>
-            <p id="user-email-display" style="font-weight:bold;"></p>
-            
-            <h4 style="margin: 20px 0 10px 0; color: var(--orange);">🤝 Dükkana Sattıklarım / Pazarlıklarım</h4>
-            <div id="user-negotiation-list" style="background: var(--bg-main); padding: 10px; border-radius: 8px; max-height: 250px; overflow-y: auto; font-size: 13px;">
-                Yükleniyor...
-            </div>
-
-            <h4 style="margin: 20px 0 10px 0;">📦 Geçmiş Siparişlerim (Aldıklarım)</h4>
-            <div id="user-orders-list" style="background: var(--bg-main); padding: 10px; border-radius: 8px; min-height: 80px; max-height: 200px; overflow-y: auto; font-size: 13px;">
-                Yükleniyor...
-            </div>
-
-            <button onclick="handleLogout()" style="width: 100%; margin-top: 20px; background-color: var(--red);">Güvenli Çıkış Yap</button>
-        </div>
+        </form>
     </div>
 
-    <div id="cart-modal" class="generic-modal">
-        <div class="generic-content">
-            <h2 style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">🛒 Alışveriş Sepetim</h2>
-            <div id="cart-items-list" style="margin-top:15px;"></div>
-            <div style="font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; color: var(--green);" id="cart-total-price">Toplam: 0.00 TL</div>
-            <button onclick="checkout()" style="width:100%; background-color: var(--green); margin-top: 15px;">Ödemeyi Tamamla</button>
-            <button onclick="toggleGenericModal('cart-modal')" style="width:100%; background-color: var(--text-muted); margin-top: 10px;">Alışverişe Devam Et</button>
+    <div id="barcode-sale-panel" class="panel-block" style="display: none; border-left: 4px solid var(--green);">
+        <h3 style="color: var(--green);">⚡ Barkod Okutarak Hızlı Stok Düş ve Satış Yap</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Hangi oturuma satıldığını yazın (Örn: Satış 1, Gece Vardiyası). Yeni isim yazdıkça otomatik yeni sekme açılır.</p>
+        <form id="barcode-sale-form" onsubmit="barcodeSaleStockDrop(event)">
+            <div style="display:flex; gap:15px; align-items: center; flex-wrap:wrap;">
+                <input type="text" id="active-sale-session" value="Satış 1" style="width:200px; font-weight:bold; color:var(--blue);" required>
+                <input type="text" id="scan-barcode-input" placeholder="Barkodu buraya okutun ve Enter'a basın..." autofocus style="flex:1; min-width: 250px;">
+            </div>
+        </form>
+    </div>
+
+    <div id="grand-total-section" style="display:none; gap: 40px; margin-bottom: 20px; background: var(--bg-card); padding: 20px; border-radius:10px; border:1px solid var(--blue);">
+        <div><span style="color: var(--text-muted); font-size:12px;">DÜKKANDAKİ TOPLAM MALİYET</span><h2 style="color: var(--blue);"><span id="grand-buy-value">0.00</span> TL</h2></div>
+        <div><span style="color: var(--text-muted); font-size:12px;">TOPLAM BEKLENEN CİRO</span><h2 style="color: var(--green);"><span id="grand-sell-value">0.00</span> TL</h2></div>
+    </div>
+
+    <div class="panel-block table-container" id="container-healthy" style="display:none;"><h3 style="color: var(--green);">🟢 %100 SAĞLIKLI DİSKLER</h3><div class="table-responsive"><table id="table-healthy"><thead><tr><th>Yükleniyor...</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="panel-block table-container" id="container-low" style="display:none;"><h3 style="color: var(--orange);">🟡 SAĞLIĞI DÜŞÜK DİSKLER</h3><div class="table-responsive"><table id="table-low"><thead><tr><th>Yükleniyor...</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="panel-block table-container" id="container-defective" style="display:none;"><h3 style="color: var(--red);">🔴 ARIZALI DİSKLER</h3><div class="table-responsive"><table id="table-defective"><thead><tr><th>Yükleniyor...</th></tr></thead><tbody></tbody></table></div></div>
+
+    <div id="reports-panel" class="panel-block" style="display: none;">
+        <h3>📊 Otomatik Satış Raporları (Oturumlara Göre)</h3>
+        <div class="tab-system" id="dynamic-report-tabs"></div>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>Barkod</th><th>Ürün Bilgisi</th><th>Oturum</th><th>Adet</th><th>Birim Satış</th><th>Toplam Ciro</th></tr></thead>
+                <tbody id="reports-tbody"></tbody>
+            </table>
+        </div>
+        <button onclick="clearSalesLogs()" style="background-color: var(--red); margin-top: 15px; width: auto; padding: 8px 15px;">🗑️ Tüm Satış Geçmişini Temizle</button>
+    </div>
+
+    <div id="cart-modal">
+        <div class="cart-content">
+            <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">🛒 Alışveriş Sepetim</h2>
+            <div id="cart-items-list"></div><div class="cart-total" id="cart-total-price">Toplam: 0.00 TL</div>
+            <button class="btn-checkout" onclick="checkout()">Ödemeye Geç (Güvenli Satın Al)</button>
+            <button class="btn-close-cart" onclick="toggleCartModal()">Kapatmaya Devam Et</button>
         </div>
     </div>
 
@@ -251,6 +249,19 @@
             <p style="font-size:13px; color:var(--text-muted); margin-top:5px;">Lütfen hesabınız için yeni bir şifre giriniz.</p>
             <input type="password" id="new-auth-password" placeholder="Yeni Şifreniz" style="margin-top:15px; margin-bottom:10px;">
             <button onclick="updateAccountPassword()" style="width: 100%; background: var(--green);">Şifreyi Güncelle ve Gir</button>
+        </div>
+    </div>
+
+    <div id="user-panel-modal" class="generic-modal">
+        <div class="generic-content" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                <h2>🛍️ Hesabım</h2>
+                <button onclick="toggleGenericModal('user-panel-modal')" style="background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;">✖</button>
+            </div>
+            <p id="user-email-display" style="font-weight:bold; margin-bottom:15px;"></p>
+            <h4 style="margin-bottom: 10px;">Geçmiş Siparişlerim</h4>
+            <div id="user-orders-list" style="background: var(--bg-main); padding: 10px; border-radius: 8px; min-height: 100px; max-height: 200px; overflow-y: auto; font-size: 13px;">Yükleniyor...</div>
+            <button onclick="handleLogout()" style="width: 100%; margin-top: 15px; background-color: var(--red);">Güvenli Çıkış Yap</button>
         </div>
     </div>
 
