@@ -6,7 +6,7 @@
     <title>Erdem Bilişim - E-Ticaret ve Stok Sistemi</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* CSS DEĞİŞKENLERİ VE LİGHT THEME */
+        /* CSS DEĞİŞKENLERİ VE AÇIK TEMA */
         :root {
             --bg-main: #f0f2f5;
             --bg-card: #ffffff;
@@ -21,7 +21,7 @@
             --input-bg: #fafbfc;
         }
 
-        /* DARK THEME DEĞİŞKENLERİ */
+        /* KARANLIK TEMA DEĞİŞKENLERİ */
         body.dark-theme {
             --bg-main: #18191a;
             --bg-card: #242526;
@@ -32,60 +32,78 @@
             --shadow: 0 2px 12px rgba(0,0,0,0.3);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.3s, color 0.3s; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s; 
+        }
+        
         body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; font-size: 14px; }
 
-        /* HEADER */
+        /* HEADER VE ÜST MENÜ */
         header { background-color: var(--bg-card); padding: 15px 20px; border-radius: 10px; box-shadow: var(--shadow); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
         h1, h2, h3 { color: var(--text-main); }
         
-        .btn-theme { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; }
-        .cart-btn { background-color: var(--green); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 16px; border: none; cursor: pointer; }
-        .cart-count { background: white; color: var(--green); padding: 2px 8px; border-radius: 20px; font-size: 14px; }
+        .btn-theme { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .cart-btn { background-color: var(--green); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 16px; border: none; cursor: pointer; width: auto; }
+        .cart-count { background: white; color: var(--green); padding: 2px 8px; border-radius: 20px; font-size: 14px; font-weight: bold; }
 
+        /* GENEL PANELLER */
         .panel-block { background-color: var(--bg-card); padding: 20px; border-radius: 10px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border-color); }
 
-        /* FORMLAR */
+        /* FORMLAR VE GİRDİLER */
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--text-main); outline: none; width: 100%; font-size: 14px; }
         input:focus, select:focus { border-color: var(--blue); }
         button { background-color: var(--blue); color: white; font-weight: bold; cursor: pointer; border: none; }
         button:hover { opacity: 0.9; }
 
-        /* VİTRİN VE FİLTRELEME */
-        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-bar input, .filter-bar select { width: auto; flex: 1; min-width: 150px; }
+        /* VİTRİN ARAMA VE FİLTRELEME BARBARI */
+        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filter-bar input, .filter-bar select { width: auto; min-width: 180px; }
         
+        /* ÜRÜN KARTLARI */
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-        .product-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s; }
+        .product-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s, border-color 0.2s; }
         .product-card:hover { transform: translateY(-3px); border-color: var(--blue); }
         .product-img { width: 100%; height: 160px; object-fit: contain; border-radius: 8px; margin-bottom: 5px; background: white; padding: 5px; }
         .prod-brand { font-size: 18px; font-weight: bold; color: var(--blue); }
         .prod-specs { font-size: 13px; color: var(--text-muted); }
         .prod-price { font-size: 20px; font-weight: bold; color: var(--green); margin-top: auto; }
+        .btn-add-cart { background-color: var(--blue); color: white; border-radius: 6px; padding: 10px; text-align: center; width: 100%; margin-top: 10px; }
 
         /* TABLOLAR */
         .table-responsive { overflow-x: auto; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; color: var(--text-main); }
         th, td { padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; }
         th { background-color: var(--bg-main); color: var(--text-muted); font-weight: bold; }
+        tr:hover { background-color: var(--input-bg); }
         .total-row { background-color: var(--bg-main); font-weight: bold; }
+        
+        .btn-action { padding: 6px 10px; width: auto; margin: 2px; font-size: 12px; display: inline-block; }
+        .btn-plus { background-color: var(--green); color: white; }
+        .btn-minus { background-color: var(--orange); color: white; }
+        .btn-delete { background-color: var(--red); color: white; }
+        .btn-edit-offer { background: var(--text-muted); color: white; font-size: 11px; padding: 2px 6px; width: auto; border-radius: 4px; border: none; cursor: pointer; display: inline-block; }
+
+        /* MODAL TASARIMI */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; position: relative; box-shadow: var(--shadow); }
+        .close-modal-btn { position: absolute; top: 15px; right: 15px; background: transparent; color: var(--text-muted); border: none; font-size: 20px; cursor: pointer; width: auto; padding: 0; }
+        
+        /* RAPOR GRAFİK ALANI */
+        .chart-container { width: 100%; height: 260px; margin-top: 15px; background: var(--bg-card); padding: 10px; border-radius: 8px; }
         
         /* TOAST BİLDİRİMLERİ */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-left: 4px solid var(--blue); animation: slideIn 0.3s ease-out forwards; display: flex; align-items: center; gap: 10px; }
-        .toast.success { border-color: var(--green); }
-        .toast.error { border-color: var(--red); }
+        .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-left: 4px solid var(--blue); animation: slideIn 0.3s ease-out forwards; display: flex; align-items: center; gap: 10px; font-weight: 500; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .toast.success { border-left-color: var(--green); }
+        .toast.error { border-left-color: var(--red); }
+        .toast.info { border-left-color: var(--orange); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        /* MODALLAR */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; position: relative; }
-        .close-modal-btn { position: absolute; top: 15px; right: 15px; background: transparent; color: var(--text-muted); border: none; font-size: 20px; cursor: pointer; width: auto; padding: 0;}
-        
-        /* RAPOR GRAFİĞİ */
-        .chart-container { width: 100%; height: 300px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -99,7 +117,7 @@
         
         <div class="header-actions">
             <button class="btn-theme" onclick="toggleTheme()" id="theme-toggle-btn">🌙</button>
-            <button class="cart-btn" id="header-cart-btn" onclick="toggleModal('cart-modal')">🛒 Sepet <span class="cart-count" id="header-cart-count">0</span></button>
+            <button class="cart-btn" id="header-cart-btn" onclick="toggleModal('cart-modal')">🛒 Sepetim <span class="cart-count" id="header-cart-count">0</span></button>
         </div>
     </header>
 
@@ -110,30 +128,38 @@
             <label style="cursor: pointer;"><input type="radio" name="user-role-radio" value="satici" onchange="handleRoleChange()"> 📦 Ürün Satmak İstiyorum</label>
         </div>
     </div>
-
+    
     <div id="customer-seller-panel" class="panel-block" style="display: none; border-left: 4px solid var(--orange);">
         <h3 style="color: var(--orange);">📦 Dükkana Mal Arz Et / Fiyat Teklifi Al</h3>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Elinizdeki disk detaylarını girin. Yönetici inceleyip size özel dükkan alış fiyatı sunacaktır.</p>
         <form id="customer-offer-form" onsubmit="submitNewOfferFromSeller(event)">
             <div class="form-grid">
-                <select id="offer-brand" required><option value="" disabled selected>Marka Seç</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Toshiba">Toshiba</option><option value="Samsung">Samsung</option><option value="Kingston">Kingston</option><option value="SanDisk">SanDisk</option><option value="Diğer">Diğer</option></select>
-                <select id="offer-capacity" required><option value="" disabled selected>Kapasite</option><option value="120">120 GB</option><option value="240">240 GB</option><option value="256">256 GB</option><option value="500">500 GB</option><option value="512">512 GB</option><option value="1000">1 TB</option><option value="2000">2 TB</option><option value="4000">4 TB</option><option value="8000">8 TB</option><option value="10000">10 TB</option></select>
-                <select id="offer-inch" required><option value="" disabled selected>İnç / Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2 (SATA/NVMe)</option></select>
+                <select id="offer-brand" required>
+                    <option value="" disabled selected>Marka Seç</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Toshiba">Toshiba</option><option value="Samsung">Samsung</option><option value="Kingston">Kingston</option><option value="SanDisk">SanDisk</option><option value="Diğer">Diğer</option>
+                </select>
+                <select id="offer-capacity" required>
+                    <option value="" disabled selected>Kapasite</option><option value="120">120 GB</option><option value="240">240 GB</option><option value="256">256 GB</option><option value="500">500 GB</option><option value="512">512 GB</option><option value="1000">1 TB</option><option value="2000">2 TB</option><option value="4000">4 TB</option><option value="8000">8 TB</option><option value="10000">10 TB</option>
+                </select>
+                <select id="offer-inch" required>
+                    <option value="" disabled selected>İnç / Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2 (SATA/NVMe)</option>
+                </select>
                 <input type="number" id="offer-count" placeholder="Kaç Adet Var?" required>
-                <input type="text" id="offer-price" placeholder="İstenen Fiyat ve Telefonunuz" required>
-                <select id="offer-status"><option value="%100">%100 (Kusursuz)</option><option value="Sağlığı Düşük">Sağlığı Düşük</option><option value="Arızalı">Arızalı</option></select>
+                <input type="text" id="offer-price" placeholder="İtenen Fiyat ve Telefonunuz" required>
+                <select id="offer-status">
+                    <option value="%100">%100 (Kusursuz)</option><option value="Sağlığı Düşük">Sağlığı Düşük</option><option value="Arızalı">Arızalı</option>
+                </select>
                 <button type="submit" style="background-color: var(--orange);">🚀 Teklifi Gönder</button>
             </div>
         </form>
     </div>
 
     <div id="storefront-panel">
-        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap;">
-            <h2 style="border-bottom: 2px solid var(--blue); padding-bottom: 5px;">🔥 Öne Çıkan Fırsatlar</h2>
+        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+            <h2 style="border-bottom: 2px solid var(--blue); padding-bottom: 5px; display: inline-block;">🔥 Öne Çıkan Fırsatlar</h2>
             <div class="filter-bar">
-                <input type="text" id="search-input" placeholder="🔍 Marka veya Model Ara..." oninput="filterStorefront()">
+                <input type="text" id="search-input" placeholder="🔍 Marka veya model ara..." oninput="filterStorefront()">
                 <select id="filter-type" onchange="filterStorefront()">
-                    <option value="all">Tüm Türler</option><option value="M.2">Sadece M.2</option><option value="2.5">Sadece 2.5"</option><option value="3.5">Sadece 3.5"</option>
+                    <option value="all">Tüm Türler</option><option value="M.2">M.2 SSD</option><option value="2.5">2.5" Sürücü</option><option value="3.5">3.5" Sabit Disk</option>
                 </select>
             </div>
         </div>
@@ -145,23 +171,32 @@
         <form id="add-stock-form" onsubmit="addNewStock(event)">
             <div class="form-grid">
                 <input type="text" id="prod-barcode" placeholder="Barkod No" required>
-                <select id="prod-brand" required><option value="" disabled selected>Marka Seç</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Toshiba">Toshiba</option><option value="Samsung">Samsung</option><option value="Kingston">Kingston</option><option value="SanDisk">SanDisk</option><option value="Diğer">Diğer</option></select>
-                <select id="prod-capacity" required><option value="" disabled selected>Kapasite</option><option value="120">120 GB</option><option value="250">250 GB</option><option value="500">500 GB</option><option value="1000">1 TB</option><option value="2000">2 TB</option></select>
-                <select id="prod-inch" required><option value="" disabled selected>İnç / Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2</option></select>
-                <input type="number" id="prod-stock" placeholder="Stok" required>
+                <select id="prod-brand" required>
+                    <option value="" disabled selected>Marka Seç</option><option value="Seagate">Seagate</option><option value="WD">WD</option><option value="Toshiba">Toshiba</option><option value="Samsung">Samsung</option><option value="Kingston">Kingston</option><option value="SanDisk">SanDisk</option><option value="Diğer">Diğer</option>
+                </select>
+                <select id="prod-capacity" required>
+                    <option value="" disabled selected>Kapasite</option><option value="120">120 GB</option><option value="240">240 GB</option><option value="256">256 GB</option><option value="500">500 GB</option><option value="512">512 GB</option><option value="1000">1 TB</option><option value="2000">2 TB</option><option value="4000">4 TB</option><option value="8000">8 TB</option><option value="10000">10 TB</option>
+                </select>
+                <select id="prod-inch" required>
+                    <option value="" disabled selected>İnç / Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2 (SATA/NVMe)</option>
+                </select>
+                <input type="number" id="prod-stock" placeholder="Stok Adedi" required>
                 <input type="number" step="0.01" id="prod-price" placeholder="Alış Maliyeti (TL)">
                 <input type="number" step="0.01" id="prod-sale-price" placeholder="Müşteri Satış Fiyatı (TL)" required>
-                <input type="text" id="prod-image-url" placeholder="Görsel Linki (Opsiyonel)">
-                <select id="prod-status"><option value="%100">%100 (Kusursuz)</option><option value="Sağlığı Düşük">Sağlığı Düşük</option><option value="Arızalı">Arızalı</option></select>
+                <input type="text" id="prod-image-url" placeholder="Görsel Linki (Boşsa otomatik atanır)">
+                <select id="prod-status">
+                    <option value="%100">%100 (Kusursuz)</option><option value="Sağlığı Düşük">Sağlığı Düşük</option><option value="Arızalı">Arızalı</option>
+                </select>
                 <button type="submit">➕ Ekle</button>
             </div>
         </form>
     </div>
 
     <div id="barcode-sale-panel" class="panel-block" style="display: none; border-left: 4px solid var(--green);">
-        <h3 style="color: var(--green);">⚡ Barkod Okutarak Hızlı Satış Yap</h3>
+        <h3 style="color: var(--green);">⚡ Barkod Okutarak Hızlı Stok Düş ve Satış Yap</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Hangi oturuma satıldığını yazın (Örn: Satış 1, Gece Vardiyası). Yeni isim yazdıkça otomatik yeni sekme açılır.</p>
         <form id="barcode-sale-form" onsubmit="barcodeSaleStockDrop(event)">
-            <div style="display:flex; gap:15px; align-items: center; flex-wrap:wrap; margin-top:10px;">
+            <div style="display:flex; gap:15px; align-items: center; flex-wrap:wrap;">
                 <input type="text" id="active-sale-session" value="Satış 1" style="width:200px; font-weight:bold; color:var(--blue);" required>
                 <input type="text" id="scan-barcode-input" placeholder="Barkodu buraya okutun ve Enter'a basın..." autofocus style="flex:1; min-width: 250px;">
             </div>
@@ -178,14 +213,16 @@
     <div class="panel-block" id="container-defective" style="display:none;"><h3 style="color: var(--red);">🔴 ARIZALI DİSKLER</h3><div class="table-responsive"><table id="table-defective"><thead><tr><th>Yükleniyor...</th></tr></thead><tbody></tbody></table></div></div>
 
     <div id="reports-panel" class="panel-block" style="display: none;">
-        <div style="display:flex; justify-content: space-between; align-items:center;">
-            <h3>📊 Gelişmiş Satış Raporları</h3>
-            <button onclick="exportReportsToCSV()" style="background: var(--blue); width:auto; padding: 8px 15px;">📥 Excel (CSV) İndir</button>
+        <div style="display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
+            <h3>📊 Otomatik Satış Raporları (Oturumlara Göre)</h3>
+            <button onclick="exportReportsToCSV()" style="background-color: var(--blue); width: auto; padding: 8px 15px;">📥 Excel (CSV) İndir</button>
         </div>
         
-        <div class="chart-container"><canvas id="salesChart"></canvas></div>
+        <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+        </div>
 
-        <div style="display:flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;" id="dynamic-report-tabs"></div>
+        <div style="display:flex; gap:10px; margin: 20px 0 flex-wrap:wrap;" id="dynamic-report-tabs"></div>
         <div class="table-responsive">
             <table>
                 <thead><tr><th>Barkod</th><th>Ürün Bilgisi</th><th>Oturum</th><th>Adet</th><th>Birim Satış</th><th>Toplam Ciro</th></tr></thead>
@@ -199,8 +236,9 @@
         <div class="modal-content">
             <button class="close-modal-btn" onclick="toggleModal('cart-modal')">✖</button>
             <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">🛒 Alışveriş Sepetim</h2>
-            <div id="cart-items-list"></div><div style="font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; color: var(--green);" id="cart-total-price">Toplam: 0.00 TL</div>
-            <button style="background: var(--green); margin-top: 15px; font-size: 16px;" onclick="checkout()">Ödemeye Geç (Yakında)</button>
+            <div id="cart-items-list"></div>
+            <div class="cart-total" style="font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; color: var(--green);" id="cart-total-price">Toplam: 0.00 TL</div>
+            <button style="background-color: var(--green); margin-top: 15px; font-size: 16px;" onclick="checkout()">Ödemeye Geç (Yakında)</button>
         </div>
     </div>
 
