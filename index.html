@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Erdem Bilişim - E-Ticaret ve Stok Sistemi</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* FERAH VE MODERN TEMA DEĞİŞKENLERİ (Orijinal CSS'in tamamen korundu) */
         :root {
             --bg-main: #f0f2f5; --bg-card: #ffffff; --border-color: #e4e6eb; --text-main: #1c1e21; --text-muted: #65676b;
             --blue: #1877f2; --green: #31a24c; --orange: #f56b2a; --red: #e41e3f; --shadow: 0 2px 12px rgba(0,0,0,0.08);
@@ -25,11 +25,12 @@
         .cart-btn { background-color: var(--green); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 16px; border: none; cursor: pointer; transition: 0.2s; }
         .cart-btn:hover { background-color: #288a3e; }
         .cart-count { background: white; color: var(--green); padding: 2px 8px; border-radius: 20px; font-size: 14px; }
+        .notif-count { background: var(--red); color: white; padding: 2px 6px; border-radius: 50%; font-size: 12px; position: absolute; top: -5px; right: -5px; }
 
         .panel-block { background-color: var(--bg-card); padding: 20px; border-radius: 10px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border-color); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
-        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #fafbfc; color: var(--text-main); outline: none; width: 100%; font-size: 14px; }
-        input:focus, select:focus { border-color: var(--blue); background-color: #fff; }
+        input, select, button, textarea { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #fafbfc; color: var(--text-main); outline: none; width: 100%; font-size: 14px; }
+        input:focus, select:focus, textarea:focus { border-color: var(--blue); background-color: #fff; }
         button { background-color: var(--blue); color: white; font-weight: bold; cursor: pointer; border: none; }
         button:hover { opacity: 0.9; }
 
@@ -53,10 +54,10 @@
         .btn-plus { background-color: var(--green); color: white; }
         .btn-minus { background-color: var(--orange); color: white; }
         .btn-delete { background-color: var(--red); color: white; }
-        .btn-edit-offer { background: #65676b; color: white; font-size: 11px; padding: 2px 6px; width: auto; border-radius: 4px;}
+        .btn-edit-offer { background: #65676b; color: white; font-size: 11px; padding: 4px 8px; width: auto; border-radius: 4px;}
+        .btn-approve { background: var(--green); color: white; font-size: 11px; padding: 4px 8px; width: auto; border-radius: 4px;}
         .total-row { background-color: #f0f2f5; font-weight: bold; }
 
-        /* MODAL VE BİLDİRİM (TOAST) CSS */
         .generic-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
         .generic-content { background: var(--bg-card); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
         
@@ -71,12 +72,11 @@
         .tab-btn { background: #e4e6eb; color: var(--text-main); width: auto; padding: 8px 16px; border-radius: 6px; }
         .tab-btn.active { background: var(--blue); color: white; }
 
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 20px; border-radius: 8px; box-shadow: var(--shadow); border-left: 4px solid var(--blue); animation: slideIn 0.3s ease-out forwards; display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-color); }
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--bg-card); color: var(--text-main); padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-left: 5px solid var(--blue); animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-color); font-weight: bold;}
         .toast.success { border-left-color: var(--green); } .toast.error { border-left-color: var(--red); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* BI DASHBOARD GRID */
         .bi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .bi-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; text-align: center; border-top: 4px solid var(--blue); }
         .bi-card h4 { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
@@ -94,8 +94,11 @@
         
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <button class="cart-btn" onclick="toggleTheme()" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); width:auto;">🌙</button>
-            <button class="cart-btn" id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" style="background-color: var(--blue); width:auto;">👤 Giriş Yap</button>
-            <button class="cart-btn" id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" style="display:none; background-color: var(--orange); width:auto;">🛍️ Hesabım</button>
+            <button class="cart-btn" id="notif-btn" onclick="toggleGenericModal('notifications-modal')" style="display:none; background:transparent; border:1px solid var(--border-color); color:var(--text-main); width:auto; position:relative;">
+                🔔 <span id="notif-badge" class="notif-count" style="display:none;">0</span>
+            </button>
+            <button class="cart-btn" id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" style="background-color: var(--blue); width:auto;">🔒 Güvenli Giriş</button>
+            <button class="cart-btn" id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" style="display:none; background-color: var(--orange); width:auto;">👤 Hesabım</button>
             <button class="cart-btn" id="header-cart-btn" onclick="toggleCartModal()">🛒 Sepetim <span class="cart-count" id="header-cart-count">0</span></button>
         </div>
     </header>
@@ -110,7 +113,7 @@
     
     <div id="customer-seller-panel" class="panel-block" style="display: none; border-left: 4px solid var(--orange);">
         <h3 style="color: var(--orange);">📦 Dükkana Mal Arz Et / Fiyat Teklifi Al</h3>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Elinizdeki disk detaylarını girin. Yönetici inceleyip size özel dükkan alış fiyatı sunacaktır.</p>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Elinizdeki disk detaylarını girin. Yönetici inceleyip size site içi bildirimle alış fiyatı sunacaktır.</p>
         <form id="customer-offer-form" onsubmit="submitNewOfferFromSeller(event)">
             <div class="form-grid">
                 <select id="offer-brand" required>
@@ -123,7 +126,7 @@
                     <option value="" disabled selected>İnç / Tür</option><option value="2.5">2.5"</option><option value="3.5">3.5"</option><option value="M.2">M.2 (SATA/NVMe)</option>
                 </select>
                 <input type="number" id="offer-count" placeholder="Kaç Adet Var?" required>
-                <input type="text" id="offer-price" placeholder="İstenen Fiyat ve Telefonunuz" required>
+                <input type="text" id="offer-price" placeholder="İstenen Fiyat (TL)" required>
                 <select id="offer-status">
                     <option value="%100">%100 (Kusursuz)</option><option value="Sağlığı Düşük">Sağlığı Düşük</option><option value="Arızalı">Arızalı</option>
                 </select>
@@ -174,7 +177,7 @@
 
     <div id="barcode-sale-panel" class="panel-block" style="display: none; border-left: 4px solid var(--green);">
         <h3 style="color: var(--green);">⚡ Barkod Okutarak Hızlı Stok Düş ve Satış Yap</h3>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Hangi oturuma satıldığını yazın (Örn: Satış 1, Gece Vardiyası). Yeni isim yazdıkça otomatik yeni sekme açılır.</p>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Hangi oturuma satıldığını yazın. Barkodu okutunca otomatik fatura oluşturma opsiyonu sunulur.</p>
         <form id="barcode-sale-form" onsubmit="barcodeSaleStockDrop(event)">
             <div style="display:flex; gap:15px; align-items: center; flex-wrap:wrap;">
                 <input type="text" id="active-sale-session" value="Satış 1" style="width:200px; font-weight:bold; color:var(--blue);" required>
@@ -206,60 +209,68 @@
 
     <div id="cart-modal">
         <div class="cart-content">
-            <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">🛒 Alışveriş Sepetim</h2>
+            <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">🛒 Güvenli Sepet Onayı</h2>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Kredi kartı bilginiz istenmez. Siparişiniz profilinizdeki adrese kargolanacaktır.</p>
             <div id="cart-items-list"></div><div class="cart-total" id="cart-total-price">Toplam: 0.00 TL</div>
-            <button class="btn-checkout" onclick="checkout()">Ödemeye Geç (Güvenli Satın Al)</button>
-            <button class="btn-close-cart" onclick="toggleCartModal()">Kapatmaya Devam Et</button>
+            <button class="btn-checkout" onclick="checkout()">Siparişi Onayla ve Fatura Al</button>
+            <button class="btn-close-cart" onclick="toggleCartModal()">Alışverişe Dön</button>
         </div>
     </div>
 
     <div id="auth-modal" class="generic-modal">
         <div class="generic-content" style="max-width: 400px;">
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
-                <h2 id="auth-title">Giriş Yap</h2>
+                <h2 id="auth-title">🔒 Güvenli Giriş</h2>
                 <button onclick="toggleGenericModal('auth-modal')" style="background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;">✖</button>
             </div>
+            
             <div id="login-form">
-                <input type="email" id="login-email" placeholder="E-Posta" style="margin-bottom: 10px;">
-                <input type="password" id="login-password" placeholder="Şifre" style="margin-bottom: 10px;">
-                <button onclick="handleLogin()" style="width: 100%; margin-bottom: 10px;">Giriş Yap</button>
-                <div style="display:flex; justify-content:space-between; font-size:13px;">
-                    <a href="#" onclick="switchAuthMode('forgot')" style="color: var(--orange);">Şifremi Unuttum</a>
-                    <a href="#" onclick="switchAuthMode('register')" style="color: var(--blue);">Kayıt Ol</a>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Siber güvenlik standartları gereği parolalar kaldırılmıştır. E-postanıza gelen tek kullanımlık kod ile giriş yapın.</p>
+                <input type="email" id="login-email" placeholder="E-Posta Adresiniz" style="margin-bottom: 10px;">
+                <button onclick="sendOTP()" style="width: 100%; margin-bottom: 10px;">Giriş Kodu Gönder</button>
+                <div style="display:flex; justify-content:center; font-size:13px; margin-top:10px;">
+                    <a href="#" onclick="switchAuthMode('register')" style="color: var(--blue);">Hesabım Yok, Kayıt Ol</a>
                 </div>
             </div>
-            <div id="register-form" style="display: none;">
-                <input type="email" id="reg-email" placeholder="E-Posta" style="margin-bottom: 10px;">
-                <input type="password" id="reg-password" placeholder="Şifre (Min 6 Karakter)" style="margin-bottom: 15px;">
-                <button onclick="handleRegister()" style="width: 100%; margin-bottom: 10px; background-color: var(--green);">Hesap Oluştur</button>
-                <p style="text-align: center; font-size: 13px;"><a href="#" onclick="switchAuthMode('login')" style="color: var(--blue);">Giriş Ekranına Dön</a></p>
+
+            <div id="otp-verify-form" style="display: none;">
+                <p style="font-size:13px; color:var(--green); margin-bottom:10px; font-weight:bold;">Kod e-postanıza gönderildi!</p>
+                <input type="text" id="login-otp-code" placeholder="6 Haneli Kodu Girin" style="margin-bottom: 10px; text-align:center; letter-spacing: 5px; font-weight:bold; font-size:18px;">
+                <button onclick="verifyOTP()" style="width: 100%; margin-bottom: 10px; background-color: var(--green);">Doğrula ve Giriş Yap</button>
             </div>
-            <div id="forgot-form" style="display: none;">
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Kayıtlı e-postanızı yazın, şifre sıfırlama linki gönderelim.</p>
-                <input type="email" id="forgot-email" placeholder="E-Posta Adresiniz" style="margin-bottom: 10px;">
-                <button onclick="sendPasswordResetLink()" style="width: 100%; margin-bottom: 10px; background-color: var(--orange);">Sıfırlama Linki Gönder</button>
+
+            <div id="register-form" style="display: none;">
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Kayıt için teslimat adresinizi girin. Ödeme kapıda veya havale ile yapılacaktır.</p>
+                <input type="email" id="reg-email" placeholder="E-Posta Adresiniz" style="margin-bottom: 10px;">
+                <textarea id="reg-address" placeholder="Açık Teslimat Adresiniz (Mahalle, Sokak, İlçe/İl)" rows="3" style="margin-bottom: 15px; resize:none;"></textarea>
+                <button onclick="handleRegister()" style="width: 100%; margin-bottom: 10px; background-color: var(--green);">Hesap Oluştur ve Profilimi Kaydet</button>
                 <p style="text-align: center; font-size: 13px;"><a href="#" onclick="switchAuthMode('login')" style="color: var(--blue);">Giriş Ekranına Dön</a></p>
             </div>
         </div>
     </div>
 
-    <div id="update-password-modal" class="generic-modal">
-        <div class="generic-content" style="max-width: 400px;">
-            <h2>🔒 Yeni Şifre Belirle</h2>
-            <p style="font-size:13px; color:var(--text-muted); margin-top:5px;">Lütfen hesabınız için yeni bir şifre giriniz.</p>
-            <input type="password" id="new-auth-password" placeholder="Yeni Şifreniz" style="margin-top:15px; margin-bottom:10px;">
-            <button onclick="updateAccountPassword()" style="width: 100%; background: var(--green);">Şifreyi Güncelle ve Gir</button>
+    <div id="notifications-modal" class="generic-modal">
+        <div class="generic-content" style="max-width: 450px;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                <h2>🔔 Bildirimlerim</h2>
+                <button onclick="toggleGenericModal('notifications-modal')" style="background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;">✖</button>
+            </div>
+            <div id="notifications-list" style="max-height: 300px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+                <p style="color:var(--text-muted); font-size:13px;">Bildiriminiz bulunmuyor.</p>
+            </div>
         </div>
     </div>
 
     <div id="user-panel-modal" class="generic-modal">
         <div class="generic-content" style="max-width: 500px;">
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
-                <h2>🛍️ Hesabım</h2>
+                <h2>👤 Profilim</h2>
                 <button onclick="toggleGenericModal('user-panel-modal')" style="background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;">✖</button>
             </div>
-            <p id="user-email-display" style="font-weight:bold; margin-bottom:15px;"></p>
-            <h4 style="margin-bottom: 10px;">Geçmiş Siparişlerim</h4>
+            <p id="user-email-display" style="font-weight:bold; color:var(--blue);"></p>
+            <p id="user-address-display" style="font-size:13px; color:var(--text-muted); margin-bottom:15px; background:var(--bg-main); padding:10px; border-radius:6px;"></p>
+            
+            <h4 style="margin-bottom: 10px;">📦 Geçmiş Siparişlerim</h4>
             <div id="user-orders-list" style="background: var(--bg-main); padding: 10px; border-radius: 8px; min-height: 100px; max-height: 200px; overflow-y: auto; font-size: 13px;">Yükleniyor...</div>
             <button onclick="handleLogout()" style="width: 100%; margin-top: 15px; background-color: var(--red);">Güvenli Çıkış Yap</button>
         </div>
