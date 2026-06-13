@@ -11,9 +11,10 @@
             --bg-main: #f0f2f5; --bg-card: #ffffff; --border-color: #e4e6eb; --text-main: #1c1e21; --text-muted: #65676b;
             --blue: #1877f2; --green: #31a24c; --orange: #f56b2a; --red: #e41e3f; --shadow: 0 2px 12px rgba(0,0,0,0.08);
         }
+        /* YENİ: Göz yormayan, yumuşatılmış karanlık mod teması */
         body.dark-theme {
-            --bg-main: #18191a; --bg-card: #242526; --border-color: #3e4042; --text-main: #e4e6eb; --text-muted: #b0b3b8;
-            --shadow: 0 2px 12px rgba(0,0,0,0.3);
+            --bg-main: #111827; --bg-card: #1f2937; --border-color: #374151; --text-main: #d1d5db; --text-muted: #9ca3af;
+            --shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.3s, color 0.3s; }
@@ -31,6 +32,7 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
         input, select, button, textarea { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #fafbfc; color: var(--text-main); outline: none; width: 100%; font-size: 14px; }
         input:focus, select:focus, textarea:focus { border-color: var(--blue); background-color: #fff; }
+        body.dark-theme input, body.dark-theme select, body.dark-theme textarea { background-color: #374151; color: #f3f4f6; }
         button { background-color: var(--blue); color: white; font-weight: bold; cursor: pointer; border: none; }
         button:hover { opacity: 0.9; }
 
@@ -47,8 +49,7 @@
         .table-responsive { overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; }
-        th { background-color: #f0f2f5; color: var(--text-muted); font-weight: bold; }
-        tr:hover { background-color: #f8fafc; }
+        th { background-color: var(--bg-main); color: var(--text-muted); font-weight: bold; }
         
         .btn-action { padding: 6px 10px; width: auto; margin: 2px; font-size: 12px;}
         .btn-plus { background-color: var(--green); color: white; }
@@ -56,12 +57,12 @@
         .btn-delete { background-color: var(--red); color: white; }
         .btn-edit-offer { background: #65676b; color: white; font-size: 11px; padding: 4px 8px; width: auto; border-radius: 4px;}
         .btn-approve { background: var(--green); color: white; font-size: 11px; padding: 4px 8px; width: auto; border-radius: 4px;}
-        .total-row { background-color: #f0f2f5; font-weight: bold; }
+        .total-row { background-color: var(--bg-main); font-weight: bold; }
 
-        .generic-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .generic-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
         .generic-content { background: var(--bg-card); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
         
-        #cart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        #cart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
         .cart-content { background: var(--bg-card); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
         .cart-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding: 10px 0; }
         .cart-total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; color: var(--green); }
@@ -69,7 +70,7 @@
         .btn-checkout { background: var(--green); margin-top: 10px; font-size: 16px;}
 
         .tab-system { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .tab-btn { background: #e4e6eb; color: var(--text-main); width: auto; padding: 8px 16px; border-radius: 6px; }
+        .tab-btn { background: var(--border-color); color: var(--text-main); width: auto; padding: 8px 16px; border-radius: 6px; }
         .tab-btn.active { background: var(--blue); color: white; }
 
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -93,12 +94,12 @@
         <div id="admin-status-badge" style="display:none; color:var(--blue); font-weight:bold; border: 1px solid var(--blue); padding: 5px 10px; border-radius: 4px;">⚡ YÖNETİCİ MODU AKTİF</div>
         
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button class="cart-btn" onclick="toggleTheme()" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); width:auto;">🌙</button>
+            <button class="cart-btn" onclick="toggleTheme()" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); width:auto;">🌙/☀️</button>
             <button class="cart-btn" id="notif-btn" onclick="toggleGenericModal('notifications-modal')" style="display:none; background:transparent; border:1px solid var(--border-color); color:var(--text-main); width:auto; position:relative;">
                 🔔 <span id="notif-badge" class="notif-count" style="display:none;">0</span>
             </button>
-            <button class="cart-btn" id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" style="background-color: var(--blue); width:auto;">🔒 Güvenli Giriş</button>
-            <button class="cart-btn" id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" style="display:none; background-color: var(--orange); width:auto;">👤 Hesabım</button>
+            <button class="cart-btn" id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" style="background-color: var(--blue); width:auto;">👤 Giriş Yap</button>
+            <button class="cart-btn" id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" style="display:none; background-color: var(--orange); width:auto;">👤 Profilim</button>
             <button class="cart-btn" id="header-cart-btn" onclick="toggleCartModal()">🛒 Sepetim <span class="cart-count" id="header-cart-count">0</span></button>
         </div>
     </header>
@@ -207,48 +208,47 @@
         <button onclick="clearSalesLogs()" style="background-color: var(--red); margin-top: 15px; width: auto; padding: 8px 15px;">🗑️ Tüm Satış Geçmişini Temizle</button>
     </div>
 
+    <!-- Güvenli Ödeme ve Fatura Modalı -->
     <div id="cart-modal">
         <div class="cart-content">
-            <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">🛒 Güvenli Sepet Onayı</h2>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Kredi kartı bilginiz istenmez. Siparişiniz profilinizdeki adrese kargolanacaktır.</p>
+            <h2 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">🛒 Sepet Onayı</h2>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Siparişiniz profilinizdeki adrese kargolanacaktır.</p>
             <div id="cart-items-list"></div><div class="cart-total" id="cart-total-price">Toplam: 0.00 TL</div>
             <button class="btn-checkout" onclick="checkout()">Siparişi Onayla ve Fatura Al</button>
             <button class="btn-close-cart" onclick="toggleCartModal()">Alışverişe Dön</button>
         </div>
     </div>
 
+    <!-- Parolalı Giriş ve Kayıt Modalı (YENİLENDİ) -->
     <div id="auth-modal" class="generic-modal">
         <div class="generic-content" style="max-width: 400px;">
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
-                <h2 id="auth-title">🔒 Güvenli Giriş</h2>
+                <h2 id="auth-title">Giriş Yap</h2>
                 <button onclick="toggleGenericModal('auth-modal')" style="background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;">✖</button>
             </div>
             
             <div id="login-form">
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Siber güvenlik standartları gereği parolalar kaldırılmıştır. E-postanıza gelen tek kullanımlık kod ile giriş yapın.</p>
                 <input type="email" id="login-email" placeholder="E-Posta Adresiniz" style="margin-bottom: 10px;">
-                <button onclick="sendOTP()" style="width: 100%; margin-bottom: 10px;">Giriş Kodu Gönder</button>
+                <input type="password" id="login-password" placeholder="Şifreniz" style="margin-bottom: 15px;">
+                <button onclick="handleLogin()" style="width: 100%; margin-bottom: 10px;">Giriş Yap</button>
                 <div style="display:flex; justify-content:center; font-size:13px; margin-top:10px;">
                     <a href="#" onclick="switchAuthMode('register')" style="color: var(--blue);">Hesabım Yok, Kayıt Ol</a>
                 </div>
             </div>
 
-            <div id="otp-verify-form" style="display: none;">
-                <p style="font-size:13px; color:var(--green); margin-bottom:10px; font-weight:bold;">Kod e-postanıza gönderildi!</p>
-                <input type="text" id="login-otp-code" placeholder="6 Haneli Kodu Girin" style="margin-bottom: 10px; text-align:center; letter-spacing: 5px; font-weight:bold; font-size:18px;">
-                <button onclick="verifyOTP()" style="width: 100%; margin-bottom: 10px; background-color: var(--green);">Doğrula ve Giriş Yap</button>
-            </div>
-
             <div id="register-form" style="display: none;">
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Kayıt için teslimat adresinizi girin. Ödeme kapıda veya havale ile yapılacaktır.</p>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Güvenlik gereği sisteme her İsim-Soyisim ile yalnızca 1 kez kayıt olunabilir.</p>
+                <input type="text" id="reg-fullname" placeholder="Adınız ve Soyadınız (Kimlikteki Gibi)" style="margin-bottom: 10px;">
                 <input type="email" id="reg-email" placeholder="E-Posta Adresiniz" style="margin-bottom: 10px;">
-                <textarea id="reg-address" placeholder="Açık Teslimat Adresiniz (Mahalle, Sokak, İlçe/İl)" rows="3" style="margin-bottom: 15px; resize:none;"></textarea>
+                <input type="password" id="reg-password" placeholder="Güçlü Bir Şifre Belirleyin" style="margin-bottom: 10px;">
+                <textarea id="reg-address" placeholder="Açık Teslimat Adresiniz (Mahalle, Sokak, İlçe/İl)" rows="2" style="margin-bottom: 15px; resize:none;"></textarea>
                 <button onclick="handleRegister()" style="width: 100%; margin-bottom: 10px; background-color: var(--green);">Hesap Oluştur ve Profilimi Kaydet</button>
                 <p style="text-align: center; font-size: 13px;"><a href="#" onclick="switchAuthMode('login')" style="color: var(--blue);">Giriş Ekranına Dön</a></p>
             </div>
         </div>
     </div>
 
+    <!-- Bildirim Modalı -->
     <div id="notifications-modal" class="generic-modal">
         <div class="generic-content" style="max-width: 450px;">
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
@@ -261,13 +261,15 @@
         </div>
     </div>
 
+    <!-- Kullanıcı Paneli -->
     <div id="user-panel-modal" class="generic-modal">
         <div class="generic-content" style="max-width: 500px;">
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
                 <h2>👤 Profilim</h2>
                 <button onclick="toggleGenericModal('user-panel-modal')" style="background:none; border:none; color:var(--red); font-size:16px; cursor:pointer;">✖</button>
             </div>
-            <p id="user-email-display" style="font-weight:bold; color:var(--blue);"></p>
+            <p id="user-name-display" style="font-weight:bold; font-size:18px; margin-bottom:5px;"></p>
+            <p id="user-email-display" style="color:var(--blue); margin-bottom:10px; font-size:13px;"></p>
             <p id="user-address-display" style="font-size:13px; color:var(--text-muted); margin-bottom:15px; background:var(--bg-main); padding:10px; border-radius:6px;"></p>
             
             <h4 style="margin-bottom: 10px;">📦 Geçmiş Siparişlerim</h4>

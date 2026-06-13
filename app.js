@@ -123,7 +123,7 @@ async function fetchNotifications() {
         if(unread > 0) { badge.style.display = "block"; badge.innerText = unread; } else { badge.style.display = "none"; }
         
         list.innerHTML = data.map(n => `
-            <div style="background:${n.is_read ? 'var(--bg-main)' : '#e6f2ff'}; padding:10px; border-radius:8px; border-left:3px solid ${n.is_read ? 'transparent' : 'var(--blue)'}; font-size:13px;">
+            <div style="background:${n.is_read ? 'var(--bg-main)' : 'rgba(59, 130, 246, 0.1)'}; padding:10px; border-radius:8px; border-left:3px solid ${n.is_read ? 'transparent' : 'var(--blue)'}; font-size:13px;">
                 ${n.message}
                 ${!n.is_read ? `<br><button onclick="markNotificationRead(${n.id})" style="background:none; border:none; color:var(--blue); font-size:11px; margin-top:5px; padding:0; cursor:pointer;">Okundu İşaretle</button>` : ''}
             </div>
@@ -141,18 +141,17 @@ window.markNotificationRead = async function(id) {
 
 async function sendSystemNotification(email, message) {
     await _supabase.from('notifications').insert({ user_email: email, message: message, is_read: false });
-    // Not: Gerçek e-posta gitmesi için Supabase Webhook + Edge Function (Resend API) entegrasyonu gerekir. 
-    // Şu an sistem içi güçlü bildirimle çözüyoruz.
 }
 
 // ==========================================
-// GÜVENLİ AUTH (OTP E-POSTA İLE GİRİŞ) VE PROFİL
+// PAROLALI AUTH VE TEKİL İSİM SİSTEMİ
 // ==========================================
 window.toggleGenericModal = function(id) {
     const m = document.getElementById(id);
     m.style.display = m.style.display === "flex" ? "none" : "flex";
     if (id === 'user-panel-modal' && currentUser) {
-        document.getElementById("user-email-display").innerText = "Giriş Yapılan Hesap: " + currentUser.email;
+        document.getElementById("user-name-display").innerText = currentUser.user_metadata.full_name || "İsimsiz Kullanıcı";
+        document.getElementById("user-email-display").innerText = currentUser.email;
         document.getElementById("user-address-display").innerText = "Kayıtlı Adres: " + (currentUser.user_metadata.address || "Adres girilmemiş.");
         fetchUserOrders();
     }
@@ -161,53 +160,65 @@ window.toggleGenericModal = function(id) {
 window.switchAuthMode = function(mode) {
     document.getElementById("login-form").style.display = "none";
     document.getElementById("register-form").style.display = "none";
-    document.getElementById("otp-verify-form").style.display = "none";
     
-    if(mode === 'register') { document.getElementById("register-form").style.display = "block"; document.getElementById("auth-title").innerText = "Kayıt Ol"; } 
-    else { document.getElementById("login-form").style.display = "block"; document.getElementById("auth-title").innerText = "Güvenli Giriş"; }
-}
-
-let otpEmailTemp = "";
-window.sendOTP = async function() {
-    otpEmailTemp = document.getElementById("login-email").value;
-    if(!otpEmailTemp) { showToast("Lütfen e-posta adresinizi girin.", "error"); return; }
-    
-    const { error } = await _supabase.auth.signInWithOtp({ email: otpEmailTemp });
-    if(error) { showToast("Kod gönderilemedi: " + error.message, "error"); } 
-    else { 
-        document.getElementById("login-form").style.display = "none"; 
-        document.getElementById("otp-verify-form").style.display = "block"; 
-        showToast("Güvenlik kodu e-postanıza gönderildi!", "success"); 
+    if(mode === 'register') { 
+        document.getElementById("register-form").style.display = "block"; 
+        document.getElementById("auth-title").innerText = "Kayıt Ol"; 
+    } else { 
+        document.getElementById("login-form").style.display = "block"; 
+        document.getElementById("auth-title").innerText = "Giriş Yap"; 
     }
 }
 
-window.verifyOTP = async function() {
-    const code = document.getElementById("login-otp-code").value;
-    const { data, error } = await _supabase.auth.verifyOtp({ email: otpEmailTemp, token: code, type: 'email' });
-    if(error) showToast("Hatalı veya süresi geçmiş kod.", "error"); 
+window.handleLogin = async function() {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+    
+    if(!email || !password) { showToast("Lütfen tüm alanları doldurun.", "error"); return; }
+    
+    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+    
+    if(error) { showToast("Giriş başarısız. Şifre veya e-posta hatalı.", "error"); } 
     else { showToast("Giriş yapıldı!", "success"); toggleGenericModal('auth-modal'); }
 }
 
 window.handleRegister = async function() {
-    const email = document.getElementById("reg-email").value; 
-    const address = document.getElementById("reg-address").value;
-    if(!address) { showToast("Lütfen sipariş teslimatı için açık adres girin.", "error"); return; }
+    const fullNameRaw = document.getElementById("reg-fullname").value.trim();
+    const fullName = fullNameRaw.toUpperCase(); // Büyük harfe çevirerek benzersizliği sağlama
+    const email = document.getElementById("reg-email").value.trim(); 
+    const password = document.getElementById("reg-password").value;
+    const address = document.getElementById("reg-address").value.trim();
 
-    const { data, error } = await _supabase.auth.signInWithOtp({ 
+    if(!fullName || !email || !password || !address) { showToast("Lütfen tüm alanları doldurun.", "error"); return; }
+    if(password.length < 6) { showToast("Şifreniz en az 6 karakter olmalıdır.", "error"); return; }
+
+    // 1. ADIM: İsim ve Soyisim benzersiz mi kontrol et
+    const { data: existingProfile } = await _supabase.from('profiles').select('full_name').eq('full_name', fullName).maybeSingle();
+    
+    if (existingProfile) {
+        showToast("Bu İsim ve Soyisim ile zaten bir hesap oluşturulmuş!", "error");
+        return;
+    }
+
+    // 2. ADIM: Auth sistemine kayıt
+    const { data, error } = await _supabase.auth.signUp({ 
         email, 
-        options: { data: { address: address } } 
+        password,
+        options: { data: { full_name: fullNameRaw, address: address } } 
     });
     
-    if(error) showToast("Kayıt Hatası: " + error.message, "error");
-    else { 
-        otpEmailTemp = email;
-        document.getElementById("register-form").style.display = "none"; 
-        document.getElementById("otp-verify-form").style.display = "block";
-        showToast("Profiliniz oluşturuldu. E-postanıza gelen kod ile doğrulayın.", "info"); 
+    if(error) { 
+        showToast("Kayıt Hatası: " + error.message, "error"); 
+    } else { 
+        // 3. ADIM: İsim bloke tablosuna kaydet
+        await _supabase.from('profiles').insert({ full_name: fullName, email: email });
+        
+        showToast("Hesabınız oluşturuldu! Şimdi giriş yapabilirsiniz.", "success");
+        switchAuthMode('login'); 
     }
 }
 
-window.handleLogout = async function() { await _supabase.auth.signOut(); showToast("Oturum güvenle kapatıldı.", "info"); toggleGenericModal('user-panel-modal'); }
+window.handleLogout = async function() { await _supabase.auth.signOut(); showToast("Oturum kapatıldı.", "info"); toggleGenericModal('user-panel-modal'); }
 
 window.showToast = function(msg, type="success") { 
     const c = document.getElementById("toast-container"); const t = document.createElement("div"); 
@@ -242,12 +253,12 @@ async function fetchStocksFromCloud(isAdmin) {
 // ==========================================
 // PDF FATURA ÇIKTISI & SİPARİŞ ONAYI
 // ==========================================
-window.generateInvoicePDF = function(items, total, address) {
+window.generateInvoicePDF = function(items, total, address, customerName) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
     doc.setFontSize(22);
-    doc.setTextColor(24, 119, 242); // --blue
+    doc.setTextColor(24, 119, 242);
     doc.text("ERDEM BILISIM", 20, 20);
     
     doc.setFontSize(12);
@@ -260,16 +271,17 @@ window.generateInvoicePDF = function(items, total, address) {
 
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(14);
-    doc.text("Teslimat Adresi:", 20, 45);
+    doc.text("Sayin " + (customerName || "Musterimiz") + ",", 20, 45);
+    doc.text("Teslimat Adresi:", 20, 53);
     doc.setFontSize(10);
     const splitAddress = doc.splitTextToSize(address || "Magazadan Teslim", 170);
-    doc.text(splitAddress, 20, 52);
+    doc.text(splitAddress, 20, 60);
 
     doc.setFontSize(12);
-    doc.text("Urun Aciklamasi", 20, 75); doc.text("Adet", 130, 75); doc.text("Fiyat", 160, 75);
-    doc.line(20, 78, 190, 78);
+    doc.text("Urun Aciklamasi", 20, 85); doc.text("Adet", 130, 85); doc.text("Fiyat", 160, 85);
+    doc.line(20, 88, 190, 88);
 
-    let y = 85;
+    let y = 95;
     items.forEach(item => {
         doc.text(`${item.brand} ${item.capacity}`, 20, y);
         doc.text(`${item.qty}`, 130, y);
@@ -279,7 +291,7 @@ window.generateInvoicePDF = function(items, total, address) {
 
     doc.line(20, y, 190, y);
     doc.setFontSize(16);
-    doc.setTextColor(49, 162, 76); // --green
+    doc.setTextColor(49, 162, 76);
     doc.text(`Genel Toplam: ${total.toFixed(2)} TL`, 120, y + 10);
 
     doc.save(`Fatura_ErdemBilisim_${new Date().getTime()}.pdf`);
@@ -287,25 +299,23 @@ window.generateInvoicePDF = function(items, total, address) {
 
 window.checkout = async function() {
     if(shoppingCart.length === 0) { showToast("Sepetiniz boş!", "error"); return; }
-    if(!currentUser) { showToast("Siparişi tamamlamak için güvenli giriş yapmalısınız.", "error"); toggleGenericModal('cart-modal'); toggleGenericModal('auth-modal'); return; }
+    if(!currentUser) { showToast("Siparişi tamamlamak için giriş yapmalısınız.", "error"); toggleGenericModal('cart-modal'); toggleGenericModal('auth-modal'); return; }
     
     const total = shoppingCart.reduce((sum, i) => sum + (i.qty * i.price), 0);
     const address = currentUser.user_metadata.address || "Profilde adres yok";
+    const fullName = currentUser.user_metadata.full_name || currentUser.email;
 
     const { error } = await _supabase.from('orders').insert({ user_id: currentUser.id, items: shoppingCart, total_price: total });
     
     if(!error) {
-        // PDF Oluştur ve İndir
-        generateInvoicePDF(shoppingCart, total, address);
+        generateInvoicePDF(shoppingCart, total, address, fullName);
 
-        // Stoktan Düşme
         for (let item of shoppingCart) {
             const stockItem = globalStocks.find(s => s.id === item.id);
             if (stockItem) await _supabase.from('stocks').update({ stock_count: Math.max(0, stockItem.stock_count - item.qty) }).eq('id', item.id);
         }
         
-        // Yöneticiye Sistem İçi Bildirim (Örnek Admin Maili yazılmalı, örn: admin@erdem.com)
-        await sendSystemNotification("admin@erdem.com", `📦 Yeni Sipariş! ${currentUser.email} kullanıcısı ${total.toFixed(2)} TL tutarında alışveriş yaptı.`);
+        await sendSystemNotification("admin@erdem.com", `📦 Yeni Sipariş! ${fullName} ${total.toFixed(2)} TL tutarında alışveriş yaptı.`);
 
         showToast("Sipariş onaylandı! Faturanız cihazınıza indiriliyor.", "success");
         shoppingCart = []; updateCartUI(); toggleGenericModal('cart-modal');
@@ -367,7 +377,7 @@ async function fetchUserOrders() {
     const { data } = await _supabase.from('orders').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
     const list = document.getElementById("user-orders-list");
     if(data && data.length > 0) {
-        list.innerHTML = data.map(o => `<div style="border-bottom:1px solid #ccc; padding:8px 0;"><span style="color:var(--blue); font-weight:bold;">Sipariş #${o.id}</span> - ${parseFloat(o.total_price).toFixed(2)} TL<br><span style="font-size:11px; color:var(--orange);">Durum: Onaylandı, Adrese Kargolanacak</span></div>`).join('');
+        list.innerHTML = data.map(o => `<div style="border-bottom:1px solid var(--border-color); padding:8px 0;"><span style="color:var(--blue); font-weight:bold;">Sipariş #${o.id}</span> - ${parseFloat(o.total_price).toFixed(2)} TL<br><span style="font-size:11px; color:var(--orange);">Durum: Onaylandı, Adrese Kargolanacak</span></div>`).join('');
     } else list.innerHTML = "Siparişiniz bulunmuyor.";
 }
 
@@ -442,13 +452,11 @@ function updateTablesByStatus(stocks, isAdmin) {
 
 // BİLDİRİM GÖNDERMELİ ONAY SİSTEMLERİ
 window.approveOfferAdmin = async function(id, sellerNote) {
-    const stockItem = globalStocks.find(s => s.id === id);
     const offerPrice = document.getElementById(`input-ALIS-${id}`).value;
     const adminNote = `ONAYLANDI - Alış Fiyatı: ${offerPrice} TL`;
     
     await _supabase.from('stocks').update({ offer_notes: `ALICI: ${adminNote} || SATICI: ${sellerNote}`, price: offerPrice }).eq('id', id);
     showToast("Teklif onaylandı, satıcıya bildirim gönderildi.", "success");
-    // Satıcı mailini sellerNote içinden çekebilir veya ayrı tutabiliriz. Şimdilik adminin kendi ekranından simüle ediyoruz.
 }
 
 window.acceptAdminOffer = async function(id) {
@@ -457,8 +465,7 @@ window.acceptAdminOffer = async function(id) {
     await _supabase.from('stocks').update({ offer_notes: `ALICI: SATICI TARAFINDAN KABUL EDİLDİ || SATICI: ${parsed.seller}` }).eq('id', id);
     
     if(currentUser) {
-        // Satıcı kabul edince yöneticiye bildirim düşer
-        await sendSystemNotification("admin@erdem.com", `🤝 Teklif Kabul Edildi! ${currentUser.email} kullanıcısı ${stockItem.brand_name} diski için sunduğunuz fiyatı onayladı.`);
+        await sendSystemNotification("admin@erdem.com", `🤝 Teklif Kabul Edildi! ${currentUser.user_metadata.full_name} kullanıcısı ${stockItem.brand_name} diski için sunduğunuz fiyatı onayladı.`);
     }
     showToast("Teklif kabul edildi! Yöneticiye bilgi iletildi.", "success");
 }
@@ -467,13 +474,14 @@ window.submitNewOfferFromSeller = async function(event) {
     event.preventDefault();
     if(!currentUser) { showToast("Teklif verebilmek için giriş yapmalısınız.", "error"); toggleGenericModal('auth-modal'); return; }
     
-    const offerNotes = `ALICI: Yok || SATICI: ${document.getElementById("offer-count").value} Adet - İstenen Fiyat: ${document.getElementById("offer-price").value} TL - İletişim: ${currentUser.email}`;
+    const fullName = currentUser.user_metadata.full_name || currentUser.email;
+    const offerNotes = `ALICI: Yok || SATICI: ${document.getElementById("offer-count").value} Adet - İstenen Fiyat: ${document.getElementById("offer-price").value} TL - İletişim: ${fullName}`;
+    
     await _supabase.from('stocks').insert({
         barcode: "Müşteri Arzı", brand_name: document.getElementById("offer-brand").value, capacity_gb: parseInt(document.getElementById("offer-capacity").value), model: document.getElementById("offer-inch").value, stock_count: parseInt(document.getElementById("offer-count").value), price: 0, sale_price: 0, offer_notes: offerNotes, status: document.getElementById("offer-status").value
     });
     
-    // Yöneticiye anında bildirim
-    await sendSystemNotification("admin@erdem.com", `📦 Yeni Arz Teklifi! ${currentUser.email} tarafından yeni bir disk satışı teklifi geldi.`);
+    await sendSystemNotification("admin@erdem.com", `📦 Yeni Arz Teklifi! ${fullName} tarafından yeni bir disk satışı teklifi geldi.`);
     document.getElementById("customer-offer-form").reset(); showToast("Teklifiniz dükkan yönetimine iletildi.", "success");
 }
 
@@ -520,9 +528,8 @@ window.barcodeSaleStockDrop = async function(event) {
         showToast("Ürün satıldı! Stoktan düşüldü.", "success");
         renderReportTabs(); 
 
-        // Yöneticiye anında fiş yazdırma opsiyonu
         if(confirm("Müşteriye PDF Fatura verilsin mi?")) {
-            generateInvoicePDF([{brand: matchedStock.brand_name, capacity: capFormat, qty: 1, price: matchedStock.sale_price}], matchedStock.sale_price, "Mağazadan Elden Teslim");
+            generateInvoicePDF([{brand: matchedStock.brand_name, capacity: capFormat, qty: 1, price: matchedStock.sale_price}], matchedStock.sale_price, "Mağazadan Elden Teslim", "Müşteri");
         }
     }
 }
@@ -563,7 +570,7 @@ function renderSalesReport() {
         const rowTotal = sale.count * sale.price; totalSessionRevenue += rowTotal;
         tbody.innerHTML += `<tr><td style="font-family: monospace;">${sale.barcode}</td> <td>${sale.title}</td> <td><span style="background:var(--blue); color:white; padding:4px 8px; border-radius:4px; font-size:12px;">${sale.session}</span></td> <td><strong>${sale.count} Adet</strong></td> <td>${sale.price.toFixed(2)} TL</td> <td style="color:var(--green); font-weight:bold;">${rowTotal.toFixed(2)} TL</td></tr>`;
     });
-    tbody.innerHTML += `<tr style="background:#f0f2f5; font-weight:bold;"><td colspan="5" style="text-align:right;">Oturum Toplamı:</td><td style="color:var(--green); font-size:16px;">${totalSessionRevenue.toFixed(2)} TL</td></tr>`;
+    tbody.innerHTML += `<tr style="background:var(--bg-main); font-weight:bold;"><td colspan="5" style="text-align:right;">Oturum Toplamı:</td><td style="color:var(--green); font-size:16px;">${totalSessionRevenue.toFixed(2)} TL</td></tr>`;
 }
 
 window.clearSalesLogs = function() {
