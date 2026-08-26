@@ -3,169 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erdem Bilişim | Kurumsal & E-Ticaret</title>
-    <!-- FontAwesome (İkonlar için) -->
+    <title>Erhan Erdem | E-Ticaret & Teknoloji</title>
+    <!-- Modern Font: Inter (Shopify Tarzı) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         /* ==========================================
-           CSS TASARIM KODLARI (Karanlık/Aydınlık Tema)
+           SHOPIFY STİLİ CSS TASARIMI
            ========================================== */
         :root {
-            --bg-main: #f4f7f6;
+            /* Aydınlık Tema - Shopify Renk Paleti */
+            --bg-main: #fbfbfb;
             --bg-card: #ffffff;
-            --text-main: #333333;
-            --text-muted: #666666;
-            --blue: #2563eb;
-            --blue-hover: #1d4ed8;
-            --green: #10b981;
-            --border-color: #e5e7eb;
-            --orange: #f59e0b;
-            --red: #ef4444;
+            --text-main: #202223; /* Shopify Koyu Gri */
+            --text-muted: #6d7175;
+            --primary: #008060; /* Shopify Yeşili */
+            --primary-hover: #006e52;
+            --secondary: #000000;
+            --border-color: #e1e3e5;
+            --orange: #ffc453;
+            --red: #d82c0d;
         }
 
         body.dark-theme {
             --bg-main: #121212;
-            --bg-card: #1e1e1e;
-            --text-main: #e0e0e0;
-            --text-muted: #a0a0a0;
+            --bg-card: #1f1f1f;
+            --text-main: #e3e5e7;
+            --text-muted: #999b9e;
+            --primary: #00a07a;
+            --primary-hover: #00c798;
+            --secondary: #ffffff;
             --border-color: #333333;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); transition: background 0.3s, color 0.3s; line-height: 1.6; }
+        a { text-decoration: none; color: inherit; }
 
-        body { background-color: var(--bg-main); color: var(--text-main); transition: background 0.3s, color 0.3s; }
-
-        /* NAVBAR */
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; background-color: var(--bg-card); box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 24px; font-weight: bold; color: var(--text-main); text-decoration: none;}
-        .logo span { color: var(--blue); }
-        .nav-links a { margin: 0 15px; text-decoration: none; color: var(--text-main); font-weight: 500; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--blue); }
+        /* NAVBAR (Üst Menü) */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 24px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+        .logo span { color: var(--primary); }
+        .nav-links a { margin: 0 15px; font-weight: 500; font-size: 15px; color: var(--text-muted); transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text-main); }
         .nav-actions { display: flex; align-items: center; gap: 15px; }
         .icon-btn { background: none; border: none; color: var(--text-main); font-size: 20px; cursor: pointer; position: relative; }
-        .badge { position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; }
+        .badge { position: absolute; top: -6px; right: -8px; background: var(--red); color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; }
         .mobile-menu-btn { display: none; background: none; border: none; font-size: 24px; color: var(--text-main); cursor: pointer; }
 
         /* SECTIONS (Bölümler) */
-        section { padding: 60px 5%; }
-        .section-title { text-align: center; margin-bottom: 40px; }
-        .section-title h2 { font-size: 32px; color: var(--blue); margin-bottom: 10px; }
+        section { padding: 80px 5%; }
+        .section-title { text-align: center; margin-bottom: 50px; }
+        .section-title h2 { font-size: 36px; font-weight: 800; color: var(--text-main); margin-bottom: 15px; letter-spacing: -1px; }
+        .section-title p { color: var(--text-muted); font-size: 18px; max-width: 600px; margin: 0 auto; }
 
-        /* HERO BÖLÜMÜ */
-        .hero-section { background: linear-gradient(rgba(37, 99, 235, 0.8), rgba(29, 78, 216, 0.9)), url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80') center/cover; color: white; text-align: center; padding: 100px 5%; }
-        .hero-content h1 { font-size: 48px; margin-bottom: 20px; }
-        .hero-content p { font-size: 18px; margin-bottom: 30px; }
-        .hero-btn { font-size: 18px; padding: 15px 30px; border-radius: 30px; text-decoration: none; display: inline-block; background-color: var(--green); color:white; font-weight:bold;}
+        /* HERO BÖLÜMÜ (Shopify Modern Karşılama) */
+        .hero-section { display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-card); padding: 100px 5%; border-bottom: 1px solid var(--border-color); gap: 40px; flex-wrap: wrap; }
+        .hero-content { flex: 1; min-width: 300px; max-width: 600px; }
+        .hero-content h1 { font-size: 56px; font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -2px; }
+        .hero-content p { font-size: 20px; color: var(--text-muted); margin-bottom: 40px; line-height: 1.5; }
+        .hero-image { flex: 1; min-width: 300px; text-align: center; }
+        .hero-image img { width: 100%; max-width: 500px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
 
-        /* FİLTRELEME & ÜRÜNLER */
-        .filter-bar { display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap; }
-        .filter-bar input, .filter-bar select { padding: 12px; width: 250px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-main); }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .product-card { background: var(--bg-card); border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
-        .product-img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; }
-        .prod-price { font-size: 20px; color: var(--green); font-weight: bold; margin: 10px 0; }
-        .btn-add-cart { background-color: var(--blue); color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold;}
-        .btn-add-cart:hover { background-color: var(--blue-hover); }
-
-        /* HİZMETLER */
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; text-align: center; }
-        .service-card { background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); }
-        .service-card i { font-size: 40px; color: var(--blue); margin-bottom: 15px; }
-
-        /* BUTONLAR & FORMLAR */
-        .btn-primary { background-color: var(--blue); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-weight:bold;}
-        .btn-primary:hover { background-color: var(--blue-hover); }
-        .btn-success { background-color: var(--green); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight:bold;}
-        .btn-secondary { background-color: var(--text-muted); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight:bold;}
+        /* BUTONLAR */
+        .btn-primary { background-color: var(--primary); color: white; border: none; padding: 14px 28px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 16px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0, 128, 96, 0.2); }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0, 128, 96, 0.3); }
+        .btn-secondary { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 14px 28px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 16px; transition: 0.2s; }
+        .btn-secondary:hover { border-color: var(--text-main); }
         .w-100 { width: 100%; }
-        .form-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-main); color: var(--text-main); }
-        .link-btn { background: none; border: none; color: var(--blue); cursor: pointer; font-size: 14px; margin-top: 10px; }
+        
+        /* FİLTRELEME & ÜRÜNLER */
+        .filter-bar { display: flex; gap: 15px; margin-bottom: 40px; justify-content: center; flex-wrap: wrap; }
+        .filter-bar input, .filter-bar select { padding: 14px; width: 280px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-card); color: var(--text-main); font-size: 15px; }
+        .filter-bar input:focus, .filter-bar select:focus { outline: 2px solid var(--primary); border-color: transparent; }
+        
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
+        .product-card { background: var(--bg-card); border-radius: 8px; padding: 20px; transition: transform 0.3s, box-shadow 0.3s; border: 1px solid transparent; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: var(--border-color); }
+        .product-img { width: 100%; height: 220px; object-fit: contain; margin-bottom: 20px; }
+        .prod-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+        .prod-specs { color: var(--text-muted); font-size: 14px; margin-bottom: 15px; }
+        .prod-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .prod-price { font-size: 22px; color: var(--text-main); font-weight: 800; }
+        
+        /* HİZMETLER */
+        .services-section { background-color: var(--bg-card); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; text-align: left; }
+        .service-card i { font-size: 32px; color: var(--primary); margin-bottom: 20px; }
+        .service-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+        .service-card p { color: var(--text-muted); font-size: 15px; }
 
-        /* MODALLAR */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: var(--bg-card); padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; border: 1px solid var(--border-color); max-height: 90vh; overflow-y: auto;}
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+        /* MODALLAR (Minimalist) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--bg-card); padding: 40px; border-radius: 12px; width: 90%; max-width: 450px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;}
+        .close-btn { position: absolute; top: 20px; right: 25px; font-size: 24px; cursor: pointer; color: var(--text-muted); transition: 0.2s; }
+        .close-btn:hover { color: var(--text-main); }
+        .form-input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-main); color: var(--text-main); font-size: 15px; }
+        .form-input:focus { outline: 2px solid var(--primary); }
+        .link-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 14px; margin-top: 10px; font-weight: 600; }
 
-        /* SEPET & BİLDİRİMLER */
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
-        #toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; }
-        .toast { padding: 15px 25px; border-radius: 8px; margin-top: 10px; color: white; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.2); animation: fadein 0.5s; }
-        .toast.success { background-color: var(--green); }
-        .toast.error { background-color: var(--red); }
-        .toast.info { background-color: var(--blue); }
-        @keyframes fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* SEPET EKRANI */
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
+        .cart-item strong { font-size: 16px; }
 
         /* WHATSAPP BUTONU */
-        .whatsapp-float { position: fixed; bottom: 30px; right: 30px; background-color: #25d366; color: white; border-radius: 50%; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; font-size: 35px; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.3s; text-decoration: none; }
+        .whatsapp-float { position: fixed; bottom: 30px; right: 30px; background-color: #25d366; color: white; border-radius: 50%; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; font-size: 35px; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3); z-index: 1000; transition: transform 0.3s; }
         .whatsapp-float:hover { transform: scale(1.1); }
+
+        /* TOAST BİLDİRİMLERİ */
+        #toast-container { position: fixed; bottom: 30px; left: 30px; z-index: 9999; }
+        .toast { padding: 16px 24px; border-radius: 8px; margin-top: 12px; color: white; font-weight: 600; font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .toast.success { background-color: var(--text-main); color: var(--bg-card); } /* Shopify siyah toast kullanır */
+        .toast.error { background-color: var(--red); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* MOBİL UYUMLULUK */
         @media (max-width: 768px) {
-            .nav-links { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-card); flex-direction: column; text-align: center; padding: 20px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-card); flex-direction: column; text-align: center; padding: 20px 0; border-bottom: 1px solid var(--border-color); }
             .nav-links.active { display: flex; }
-            .nav-links a { margin: 15px 0; }
+            .nav-links a { margin: 15px 0; font-size: 18px; }
             .mobile-menu-btn { display: block; }
-            .hero-content h1 { font-size: 32px; }
+            .hero-content h1 { font-size: 40px; }
             .filter-bar input, .filter-bar select { width: 100%; }
+            section { padding: 50px 5%; }
         }
 
-        /* YÖNETİCİ & SATICI TABLOLARI (Gerektiğinde görünür) */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: left; }
-        th { background-color: var(--bg-main); color: var(--text-muted); }
-        footer { text-align: center; padding: 20px; background: var(--bg-card); border-top: 1px solid var(--border-color); }
+        /* FOOTER */
+        footer { text-align: center; padding: 40px 20px; background: var(--bg-main); color: var(--text-muted); font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <!-- ÜST MENÜ (NAVBAR) -->
+    <!-- NAVBAR -->
     <header class="navbar">
-        <a href="#" class="logo">Erdem <span>Bilişim</span></a>
+        <a href="#" class="logo">Erhan <span>Erdem</span></a>
         <nav class="nav-links">
             <a href="#home">Ana Sayfa</a>
-            <a href="#catalog">Ürünler</a>
-            <a href="#about">Biz Kimiz?</a>
+            <a href="#catalog">Katalog</a>
             <a href="#services">Hizmetler</a>
             <a href="#contact">İletişim</a>
         </nav>
         <div class="nav-actions">
-            <button onclick="toggleTheme()" class="icon-btn" title="Karanlık/Aydınlık Tema"><i class="fas fa-moon"></i></button>
-            <button id="notif-btn" onclick="toggleGenericModal('notif-modal')" class="icon-btn" style="display:none;" title="Bildirimler">
+            <button onclick="toggleTheme()" class="icon-btn" title="Temayı Değiştir"><i class="fas fa-moon"></i></button>
+            <button id="notif-btn" onclick="toggleGenericModal('notif-modal')" class="icon-btn" style="display:none;">
                 <i class="fas fa-bell"></i> <span id="notif-badge" class="badge" style="display:none;">0</span>
             </button>
             <button id="header-cart-btn" onclick="toggleGenericModal('cart-modal')" class="icon-btn">
-                <i class="fas fa-shopping-cart"></i> <span id="header-cart-count" class="badge">0</span>
+                <i class="fas fa-shopping-bag"></i> <span id="header-cart-count" class="badge">0</span>
             </button>
-            <button id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" class="btn-primary">Giriş Yap</button>
-            <button id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" class="btn-secondary" style="display:none;">Hesabım</button>
+            <button id="auth-nav-btn" onclick="toggleGenericModal('auth-modal')" class="btn-primary" style="padding: 10px 20px; font-size:14px;">Giriş Yap</button>
+            <button id="user-panel-btn" onclick="toggleGenericModal('user-panel-modal')" class="btn-secondary" style="display:none; padding: 10px 20px; font-size:14px;">Hesabım</button>
         </div>
         <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
     </header>
 
-    <!-- KULLANICI / MÜŞTERİ VİTRİNİ -->
     <div id="storefront-panel">
         
-        <!-- ANA SAYFA (HERO) -->
+        <!-- HERO -->
         <section id="home" class="hero-section">
             <div class="hero-content">
-                <h1>Teknoloji ve Güvenin Buluşma Noktası</h1>
-                <p>En yeni donanım ürünleri, profesyonel teknik destek ve kurumsal çözümlerle yanınızdayız.</p>
-                <a href="#catalog" class="btn-primary hero-btn">Ürünleri İncele</a>
+                <h1>Geleceğin E-Ticaret Altyapısını Keşfedin</h1>
+                <p>Erhan Erdem güvencesiyle en yeni teknolojik donanımlara, güvenli alışveriş altyapısı ve kusursuz teknik destekle anında ulaşın.</p>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <a href="#catalog" class="btn-primary">Ürünleri İncele</a>
+                    <a href="#contact" class="btn-secondary">Bizimle İletişime Geçin</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80" alt="E-Ticaret Alışveriş">
             </div>
         </section>
 
-        <!-- ÜRÜN KATALOĞU VE FİLTRELEME -->
-        <section id="catalog" class="catalog-section">
+        <!-- KATALOG -->
+        <section id="catalog" style="background-color: var(--bg-main);">
             <div class="section-title">
-                <h2>Ürün Kataloğu</h2>
-                <p>İhtiyacınıza en uygun disk ve donanımları bulun.</p>
+                <h2>Öne Çıkan Ürünler</h2>
+                <p>İhtiyacınıza uygun teknolojik çözümleri filtreleyip hemen sipariş verin.</p>
             </div>
             
             <div class="filter-bar">
-                <input type="text" id="search-input" placeholder="Ürün ara (Örn: Samsung, 500GB)..." onkeyup="filterProducts()">
+                <input type="text" id="search-input" placeholder="Ürün ara..." onkeyup="filterProducts()">
                 <select id="sort-select" onchange="filterProducts()">
-                    <option value="default">Sıralama: Varsayılan</option>
+                    <option value="default">Sıralama: Önerilenler</option>
                     <option value="price-asc">Fiyat: Düşükten Yükseğe</option>
                     <option value="price-desc">Fiyat: Yüksekten Düşüğe</option>
                 </select>
@@ -176,106 +197,83 @@
             </div>
         </section>
 
-        <!-- BİZ KİMİZ (HAKKIMIZDA) -->
-        <section id="about" class="about-section" style="background-color: var(--bg-card);">
-            <div class="section-title">
-                <h2>Biz Kimiz?</h2>
-            </div>
-            <div style="text-align: center; max-width: 800px; margin: 0 auto; line-height: 1.6;">
-                <p>Erdem Bilişim olarak yılların getirdiği tecrübe ile müşterilerimize en güvenilir bilgisayar bileşenlerini ve teknik servis hizmetini sunuyoruz. Şeffaflık, güven ve kalite temel prensiplerimizdir.</p>
-            </div>
-        </section>
-
         <!-- HİZMETLER -->
         <section id="services" class="services-section">
             <div class="section-title">
-                <h2>Hizmetlerimiz</h2>
+                <h2>Size Nasıl Yardımcı Olabiliriz?</h2>
             </div>
             <div class="services-grid">
                 <div class="service-card">
-                    <i class="fas fa-laptop-medical"></i>
-                    <h3>Teknik Servis</h3>
-                    <p>Garantili bakım ve onarım hizmetleri.</p>
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Güvenli Alışveriş</h3>
+                    <p>En üst düzey şifreleme yöntemleriyle korunan güvenli ödeme ve altyapı sistemleri.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fas fa-server"></i>
-                    <h3>Kurumsal Çözümler</h3>
-                    <p>Şirketler için toplu donanım ve ağ kurulumu.</p>
-                </div>
-                <div class="service-card">
-                    <i class="fas fa-box-open"></i>
+                    <i class="fas fa-truck-fast"></i>
                     <h3>Hızlı Teslimat</h3>
-                    <p>Siparişleriniz aynı gün kargoda veya mağazadan teslim.</p>
+                    <p>Siparişleriniz aynı gün kargoya verilir veya mağazamızdan anında teslim alınır.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-headset"></i>
+                    <h3>7/24 Teknik Destek</h3>
+                    <p>Satış öncesi ve sonrası tüm teknolojik sorunlarınız için profesyonel destek.</p>
                 </div>
             </div>
         </section>
 
         <!-- İLETİŞİM -->
-        <section id="contact" class="contact-section" style="background-color: var(--bg-card);">
+        <section id="contact" style="background-color: var(--bg-main);">
             <div class="section-title">
-                <h2>İletişim</h2>
+                <h2>Bizimle İletişime Geçin</h2>
+                <p>Sorularınız mı var? Ekibimiz size yardımcı olmaktan memnuniyet duyar.</p>
             </div>
-            <div style="text-align: center; max-width: 800px; margin: 0 auto; line-height: 2;">
-                <p><i class="fas fa-map-marker-alt" style="color:var(--blue); font-size:20px; width:30px;"></i> İstanbul, Türkiye</p>
-                <p><i class="fas fa-envelope" style="color:var(--blue); font-size:20px; width:30px;"></i> info@erdembilisim.com</p>
-                <p><i class="fas fa-phone" style="color:var(--blue); font-size:20px; width:30px;"></i> +90 555 555 55 55</p>
+            <div style="text-align: center; max-width: 600px; margin: 0 auto; background: var(--bg-card); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="margin-bottom: 20px; font-size: 24px;">Erhan Erdem</h3>
+                <p style="margin-bottom: 15px;"><i class="fas fa-map-marker-alt" style="color:var(--primary); width:25px;"></i> İstanbul, Türkiye</p>
+                <p style="margin-bottom: 15px;"><i class="fas fa-envelope" style="color:var(--primary); width:25px;"></i> info@erhanerdem.com</p>
+                <p style="margin-bottom: 25px;"><i class="fas fa-phone" style="color:var(--primary); width:25px;"></i> +90 540 113 34 61</p>
+                <a href="https://wa.me/905401133461?text=Merhaba,%20sitenizden%20ulaşıyorum." target="_blank" class="btn-primary w-100" style="display:inline-block; text-align:center;"><i class="fab fa-whatsapp"></i> WhatsApp'tan Yazın</a>
             </div>
         </section>
     </div>
 
-    <!-- SİSTEM YÖNETİMİ / SATICI PANELLERİ (Arka Planda JS için gizli tutuluyor) -->
-    <div id="admin-panel" style="display:none; padding:20px;"><h2>Yönetici Paneli (Aktif)</h2></div>
+    <!-- GİZLİ PANELLER (Admin / Satıcı modları için arka plan) -->
+    <div id="admin-panel" style="display:none;"></div>
     <div id="barcode-sale-panel" style="display:none;"></div>
-    <div id="grand-total-section" style="display:none;"></div>
     <div id="reports-panel" style="display:none;"></div>
     <div id="bi-dashboard-panel" style="display:none;"></div>
-    <div id="customer-role-selector" style="display:none;"></div>
-    <span id="admin-status-badge" style="display:none;"></span>
     <div id="customer-seller-panel" style="display:none;"></div>
-
-    <div id="container-healthy" style="display:none; padding:20px;">
-        <h3>Sağlıklı Stoklar</h3>
-        <table id="table-healthy"><thead><tr></tr></thead><tbody></tbody></table>
-    </div>
-    <div id="container-low" style="display:none; padding:20px;">
-        <h3>Kritik Stoklar</h3>
-        <table id="table-low"><thead><tr></tr></thead><tbody></tbody></table>
-    </div>
-    <div id="container-defective" style="display:none; padding:20px;">
-        <h3>Arızalı Ürünler</h3>
-        <table id="table-defective"><thead><tr></tr></thead><tbody></tbody></table>
-    </div>
+    <div id="container-healthy" style="display:none;"></div>
+    <div id="container-low" style="display:none;"></div>
+    <div id="container-defective" style="display:none;"></div>
 
     <!-- FOOTER -->
     <footer>
-        <p>&copy; 2026 Erdem Bilişim. Tüm hakları saklıdır.</p>
+        <p>&copy; 2026 Erhan Erdem E-Ticaret Sistemleri. Tüm hakları saklıdır.</p>
     </footer>
 
-    <!-- WHATSAPP CANLI DESTEK BUTONU -->
-    <a href="https://wa.me/905555555555?text=Merhaba,%20sitenizden%20ulaşıyorum." class="whatsapp-float" target="_blank" title="WhatsApp Canlı Destek">
+    <!-- WHATSAPP CANLI DESTEK BUTONU (GÜNCELLENDİ) -->
+    <a href="https://wa.me/905401133461?text=Merhaba,%20sitenizden%20ulaşıyorum." class="whatsapp-float" target="_blank" title="WhatsApp Canlı Destek">
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <!-- TOAST BİLDİRİMLERİ -->
     <div id="toast-container"></div>
 
     <!-- ==========================================
          MODALLAR (Popup Ekranları)
          ========================================== -->
-         
-    <!-- Giriş / Kayıt / Şifremi Unuttum Modalı -->
     <div id="auth-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-content auth-box">
+        <div class="modal-content">
             <span class="close-btn" onclick="toggleGenericModal('auth-modal')">&times;</span>
-            <h2 id="auth-title" style="margin-bottom:20px;">Giriş Yap</h2>
+            <h2 id="auth-title" style="margin-bottom:25px; font-weight:800; font-size:28px;">Giriş Yap</h2>
             
             <div id="login-form">
                 <input type="email" id="login-email" placeholder="E-Posta Adresi" class="form-input">
                 <input type="password" id="login-password" placeholder="Şifre" class="form-input">
                 <button onclick="handleLogin()" class="btn-primary w-100">Giriş Yap</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <button class="link-btn" onclick="switchAuthMode('register')">Hesabın yok mu? Kayıt Ol</button><br>
-                    <button class="link-btn" onclick="switchAuthMode('forgot-password')">Şifremi Unuttum</button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="link-btn" onclick="switchAuthMode('register')">Hesabınız yok mu? Hesap oluşturun</button><br>
+                    <button class="link-btn" onclick="switchAuthMode('forgot-password')" style="color:var(--text-muted);">Şifremi Unuttum</button>
                 </div>
             </div>
 
@@ -283,36 +281,37 @@
                 <input type="text" id="reg-fullname" placeholder="Ad Soyad" class="form-input">
                 <input type="email" id="reg-email" placeholder="E-Posta Adresi" class="form-input">
                 <input type="password" id="reg-password" placeholder="Şifre (En az 6 karakter)" class="form-input">
-                <textarea id="reg-address" placeholder="Teslimat Adresi" class="form-input"></textarea>
+                <textarea id="reg-address" placeholder="Teslimat Adresi" class="form-input" style="resize:none; height:80px;"></textarea>
                 <button onclick="handleRegister()" class="btn-primary w-100">Kayıt Ol</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <button class="link-btn" onclick="switchAuthMode('login')">Zaten hesabın var mı? Giriş Yap</button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="link-btn" onclick="switchAuthMode('login')">Zaten hesabınız var mı? Giriş yapın</button>
                 </div>
             </div>
 
             <div id="forgot-password-form" style="display:none;">
-                <p style="font-size: 13px; margin-bottom:15px; color:var(--text-muted);">E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.</p>
-                <input type="email" id="forgot-email" placeholder="Kayıtlı E-Posta Adresi" class="form-input">
-                <button onclick="handleForgotPassword()" class="btn-primary w-100">Sıfırlama Linki Gönder</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <button class="link-btn" onclick="switchAuthMode('login')">Giriş Ekranına Dön</button>
+                <p style="font-size: 14px; margin-bottom:20px; color:var(--text-muted);">E-posta adresinizi girin, şifre sıfırlama bağlantısını gönderelim.</p>
+                <input type="email" id="forgot-email" placeholder="E-Posta Adresi" class="form-input">
+                <button onclick="handleForgotPassword()" class="btn-primary w-100">Bağlantı Gönder</button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="link-btn" onclick="switchAuthMode('login')">Giriş ekranına dön</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Sepet ve Ödeme Modalı -->
+    <!-- Sepet Modalı -->
     <div id="cart-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleGenericModal('cart-modal')">&times;</span>
-            <h2 style="margin-bottom:20px;">Sepetiniz</h2>
-            <div id="cart-items-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;"></div>
-            <h3 id="cart-total-price" style="text-align:right; margin-bottom: 20px; color:var(--blue);">Toplam: 0.00 TL</h3>
-            
-            <div id="checkout-section" style="border-top: 1px solid var(--border-color); padding-top: 20px;">
-                <h3 style="margin-bottom:10px;">Ödeme ve Onay</h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom:15px;">Siparişiniz onaylandığında e-faturanız indirilecektir.</p>
-                <button onclick="checkout()" class="btn-success w-100" style="padding: 12px; font-size:16px;">Siparişi Tamamla</button>
+            <h2 style="margin-bottom:25px; font-weight:800;">Sepetiniz</h2>
+            <div id="cart-items-list" style="max-height: 350px; overflow-y: auto; margin-bottom: 20px; padding-right:5px;"></div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:800; margin-bottom:20px;">
+                    <span>Ara Toplam</span>
+                    <span id="cart-total-price">0.00 TL</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom:15px; text-align:center;">Vergiler ve kargo ödeme adımında hesaplanır.</p>
+                <button onclick="checkout()" class="btn-primary w-100" style="padding: 16px; font-size:18px;">Güvenli Ödeme Yap</button>
             </div>
         </div>
     </div>
@@ -321,46 +320,42 @@
     <div id="user-panel-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleGenericModal('user-panel-modal')">&times;</span>
-            <h2 style="margin-bottom:20px;">Hesabım</h2>
-            <p><strong>İsim:</strong> <span id="user-name-display"></span></p>
-            <p><strong>E-Posta:</strong> <span id="user-email-display"></span></p>
-            <p style="margin-bottom:20px;"><strong id="user-address-display"></strong></p>
+            <h2 style="margin-bottom:25px; font-weight:800;">Hesabım</h2>
+            <div style="background:var(--bg-main); padding:15px; border-radius:8px; margin-bottom:20px;">
+                <p><strong>İsim:</strong> <span id="user-name-display"></span></p>
+                <p><strong>E-Posta:</strong> <span id="user-email-display"></span></p>
+                <p><strong>Adres:</strong> <span id="user-address-display"></span></p>
+            </div>
             
-            <h3 style="margin-bottom:10px; border-bottom: 1px solid var(--border-color); padding-bottom:5px;">Siparişlerim</h3>
-            <div id="user-orders-list" style="max-height: 150px; overflow-y: auto; margin-bottom:20px; font-size:14px;"></div>
+            <h3 style="margin-bottom:15px; font-size:18px;">Geçmiş Siparişler</h3>
+            <div id="user-orders-list" style="max-height: 200px; overflow-y: auto; margin-bottom:20px; font-size:14px;"></div>
             
-            <button onclick="handleLogout()" class="btn-secondary w-100">Çıkış Yap</button>
+            <button onclick="handleLogout()" class="btn-secondary w-100">Oturumu Kapat</button>
         </div>
     </div>
 
-    <!-- Bildirimler Modalı -->
+    <!-- Bildirim Modalı -->
     <div id="notif-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleGenericModal('notif-modal')">&times;</span>
-            <h2 style="margin-bottom:20px;">Bildirimler</h2>
-            <div id="notifications-list" style="max-height: 300px; overflow-y: auto; display:flex; flex-direction:column; gap:10px;"></div>
+            <h2 style="margin-bottom:25px; font-weight:800;">Bildirimler</h2>
+            <div id="notifications-list" style="max-height: 350px; overflow-y: auto; display:flex; flex-direction:column; gap:10px;"></div>
         </div>
     </div>
 
     <!-- ==========================================
-         JAVASCRIPT (Supabase, jsPDF ve Uygulama Mantığı)
+         JAVASCRIPT UYGULAMASI
          ========================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <script>
-        // 1. BULUT VERİTABANI BAĞLANTI BİLGİLERİ
         const SUPABASEURL = "https://zwayidssoujhrjxzgdql.supabase.co"; 
         const SUPABASEKEY = "sbpublishablewHYCLbDylFN9wnRXuGCmFg_cl1OPZAC";
         const _supabase = supabase.createClient(SUPABASEURL, SUPABASEKEY);
         
-        let currentUser = null;
-        let globalStocks = [];
-        let shoppingCart = []; 
-        let currentActiveReportTab = "Satış 1";
-        let hasSelectedRole = false; 
+        let currentUser = null; let globalStocks = []; let shoppingCart = []; 
 
-        // 2. SAYFA YÜKLENDİĞİNDE YETKİ VE SOKET KONTROLÜ
         document.addEventListener("DOMContentLoaded", async () => {
             _supabase.auth.onAuthStateChange(async (event, session) => {
                 if (session) {
@@ -368,8 +363,7 @@
                     document.getElementById("auth-nav-btn").style.display = "none";
                     document.getElementById("user-panel-btn").style.display = "block";
                     document.getElementById("notif-btn").style.display = "block";
-                    fetchNotifications();
-                    setupNotificationSocket();
+                    fetchNotifications(); setupNotificationSocket();
                 } else {
                     currentUser = null;
                     document.getElementById("auth-nav-btn").style.display = "block";
@@ -380,360 +374,203 @@
 
             const { data: { session } } = await _supabase.auth.getSession();
             let isAdmin = false;
-            if (session) { 
-                currentUser = session.user;
-                isAdmin = (currentUser.email === 'admin@erdem.com'); 
-            }
-
-            setupPanelsBasedOnRole(isAdmin);
+            if (session) { currentUser = session.user; isAdmin = (currentUser.email === 'admin@erdem.com'); }
+            
+            if(!isAdmin) document.getElementById("storefront-panel").style.display = "block";
             await fetchStocksFromCloud(isAdmin);
             setupRealtimeSocket(isAdmin);
         });
 
-        // MOBİL MENÜ
-        window.toggleMobileMenu = function() {
-            document.querySelector('.nav-links').classList.toggle('active');
-        }
+        window.toggleMobileMenu = () => document.querySelector('.nav-links').classList.toggle('active');
+        window.toggleTheme = () => document.body.classList.toggle('dark-theme'); 
 
-        // TEMA DEĞİŞTİRİCİ
-        window.toggleTheme = function() { 
-            document.body.classList.toggle('dark-theme'); 
-        }
-
-        // PANELLERİ AYARLA
-        function setupPanelsBasedOnRole(isAdmin) {
-            if (isAdmin) {
-                localStorage.removeItem("erdembilisimlocked_role");
-                document.getElementById("admin-panel").style.display = "block";
-                document.getElementById("barcode-sale-panel").style.display = "block";
-                document.getElementById("grand-total-section").style.display = "flex";
-                document.getElementById("reports-panel").style.display = "block";
-                document.getElementById("bi-dashboard-panel").style.display = "block"; 
-                document.getElementById("customer-role-selector").style.display = "none";
-                document.getElementById("storefront-panel").style.display = "none"; 
-                document.getElementById("header-cart-btn").style.display = "none";
-                document.getElementById("admin-status-badge").style.display = "block";
-
-                document.getElementById("container-healthy").style.display = "block";
-                document.getElementById("container-low").style.display = "block";
-                document.getElementById("container-defective").style.display = "block";
-
-                updateTableHeadersDirect(true); 
-                renderReportTabs();
-            } else {
-                updateTableHeadersDirect(false);
-                const savedRole = localStorage.getItem("erdem_bilisim_locked_role");
-                if (savedRole) {
-                    hasSelectedRole = true;
-                    // Eğer admin değilse ve role seçildiyse ona göre ayarla. Kurumsal modda varsayılan "alici" kabul edilir.
-                    if (savedRole === "satici") {
-                        document.getElementById("customer-seller-panel").style.display = "block";
-                        document.getElementById("storefront-panel").style.display = "none";
-                        document.getElementById("header-cart-btn").style.display = "none";
-                        document.getElementById("container-healthy").style.display = "block";
-                        document.getElementById("container-low").style.display = "block";
-                        document.getElementById("container-defective").style.display = "block";
-                    } else {
-                        document.getElementById("storefront-panel").style.display = "block";
-                    }
-                } else {
-                    document.getElementById("storefront-panel").style.display = "block";
-                }
-            }
-        }
-
-        // SOKET MOTORLARI
         function setupRealtimeSocket(isAdmin) {
-            _supabase.channel('public:stocks')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'stocks' }, payload => {
-                    if (payload.eventType === 'INSERT') globalStocks.push(payload.new);
-                    else if (payload.eventType === 'UPDATE') { 
-                        const idx = globalStocks.findIndex(s => s.id === payload.new.id); 
-                        if(idx > -1) globalStocks[idx] = payload.new; 
-                    } 
-                    else if (payload.eventType === 'DELETE') globalStocks = globalStocks.filter(s => s.id !== payload.old.id);
-
-                    globalStocks.sort((a,b) => a.id - b.id);
-
-                    if (isAdmin) { 
-                        updateTablesByStatus(globalStocks, true); 
-                        calculateBusinessIntelligence(); 
-                    } else {
-                        const role = localStorage.getItem("erdem_bilisim_locked_role") || "alici";
-                        if(role === 'alici') filterProducts(); 
-                        else updateTablesByStatus(globalStocks, false);
-                    }
-                }).subscribe();
+            _supabase.channel('public:stocks').on('postgres_changes', { event: '*', schema: 'public', table: 'stocks' }, payload => {
+                if (payload.eventType === 'INSERT') globalStocks.push(payload.new);
+                else if (payload.eventType === 'UPDATE') { const idx = globalStocks.findIndex(s => s.id === payload.new.id); if(idx > -1) globalStocks[idx] = payload.new; } 
+                else if (payload.eventType === 'DELETE') globalStocks = globalStocks.filter(s => s.id !== payload.old.id);
+                globalStocks.sort((a,b) => a.id - b.id);
+                if (!isAdmin) filterProducts(); 
+            }).subscribe();
         }
 
         function setupNotificationSocket() {
             if(!currentUser) return;
-            _supabase.channel('public:notifications')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_email=eq.${currentUser.email}` }, payload => {
-                    showToast("🔔 Yeni Bildirim: " + payload.new.message, "success");
-                    fetchNotifications();
-                }).subscribe();
+            _supabase.channel('public:notifications').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_email=eq.${currentUser.email}` }, payload => {
+                showToast("Yeni Bildiriminiz var!", "success"); fetchNotifications();
+            }).subscribe();
         }
 
         async function fetchNotifications() {
             if(!currentUser) return;
             const { data } = await _supabase.from('notifications').select('*').eq('useremail', currentUser.email).order('created_at', { ascending: false });
-            const list = document.getElementById("notifications-list");
-            const badge = document.getElementById("notif-badge");
-
+            const list = document.getElementById("notifications-list"); const badge = document.getElementById("notif-badge");
             if(data && data.length > 0) {
                 let unread = data.filter(d => !d.is_read).length;
-                if(unread > 0) { badge.style.display = "block"; badge.innerText = unread; } else { badge.style.display = "none"; }
-
-                list.innerHTML = data.map(n => `
-                    <div style="background:${n.is_read ? 'var(--bg-main)' : 'rgba(59, 130, 246, 0.1)'}; padding:10px; border-radius:8px; border-left:3px solid ${n.is_read ? 'transparent' : 'var(--blue)'}; font-size:13px;">
-                        ${n.message}
-                        ${!n.is_read ? `<br><button onclick="markNotificationRead(${n.id})" style="background:none; border:none; color:var(--blue); font-size:11px; margin-top:5px; padding:0; cursor:pointer;">Okundu İşaretle</button>` : ''}
-                    </div>
-                `).join('');
-            } else {
-                list.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Bildiriminiz bulunmuyor.</p>';
-                badge.style.display = "none";
-            }
+                if(unread > 0) { badge.style.display = "block"; badge.innerText = unread; } else badge.style.display = "none";
+                list.innerHTML = data.map(n => `<div style="background:${n.is_read ? 'var(--bg-main)' : 'rgba(0,128,96,0.1)'}; padding:15px; border-radius:8px; border-left:4px solid ${n.is_read ? 'transparent' : 'var(--primary)'}; font-size:14px;">${n.message}${!n.is_read ? `<br><button onclick="markNotificationRead(${n.id})" style="background:none; border:none; color:var(--primary); font-size:12px; margin-top:8px; cursor:pointer; font-weight:600;">Okundu İşaretle</button>` : ''}</div>`).join('');
+            } else { list.innerHTML = '<p style="color:var(--text-muted); font-size:14px;">Bildiriminiz bulunmuyor.</p>'; badge.style.display = "none"; }
         }
 
-        window.markNotificationRead = async function(id) {
-            await _supabase.from('notifications').update({ is_read: true }).eq('id', id);
-            fetchNotifications();
-        }
+        window.markNotificationRead = async (id) => { await _supabase.from('notifications').update({ is_read: true }).eq('id', id); fetchNotifications(); }
+        async function sendSystemNotification(email, message) { await _supabase.from('notifications').insert({ useremail: email, message: message, is_read: false }); }
 
-        async function sendSystemNotification(email, message) {
-            await _supabase.from('notifications').insert({ useremail: email, message: message, is_read: false });
-        }
-
-        // MODAL YÖNETİMİ
-        window.toggleGenericModal = function(id) {
-            const m = document.getElementById(id);
-            if(!m) return;
+        window.toggleGenericModal = (id) => {
+            const m = document.getElementById(id); if(!m) return;
             m.style.display = m.style.display === "flex" ? "none" : "flex";
             if (id === 'user-panel-modal' && currentUser) {
                 document.getElementById("user-name-display").innerText = currentUser.user_metadata.full_name || "İsimsiz Kullanıcı";
                 document.getElementById("user-email-display").innerText = currentUser.email;
-                document.getElementById("user-address-display").innerText = "Kayıtlı Adres: " + (currentUser.user_metadata.address || "Adres girilmemiş.");
+                document.getElementById("user-address-display").innerText = currentUser.user_metadata.address || "Adres girilmemiş.";
                 fetchUserOrders();
             }
         }
 
-        window.switchAuthMode = function(mode) {
-            document.getElementById("login-form").style.display = "none";
-            document.getElementById("register-form").style.display = "none";
-            document.getElementById("forgot-password-form").style.display = "none";
-
-            if(mode === 'register') { 
-                document.getElementById("register-form").style.display = "block"; 
-                document.getElementById("auth-title").innerText = "Kayıt Ol"; 
-            } else if (mode === 'forgot-password') {
-                document.getElementById("forgot-password-form").style.display = "block"; 
-                document.getElementById("auth-title").innerText = "Şifremi Unuttum"; 
-            } else { 
-                document.getElementById("login-form").style.display = "block"; 
-                document.getElementById("auth-title").innerText = "Giriş Yap"; 
-            }
+        window.switchAuthMode = (mode) => {
+            ["login-form", "register-form", "forgot-password-form"].forEach(id => document.getElementById(id).style.display = "none");
+            if(mode === 'register') { document.getElementById("register-form").style.display = "block"; document.getElementById("auth-title").innerText = "Hesap Oluştur"; } 
+            else if (mode === 'forgot-password') { document.getElementById("forgot-password-form").style.display = "block"; document.getElementById("auth-title").innerText = "Şifremi Unuttum"; } 
+            else { document.getElementById("login-form").style.display = "block"; document.getElementById("auth-title").innerText = "Giriş Yap"; }
         }
 
-        // KULLANICI İŞLEMLERİ
-        window.handleLogin = async function() {
-            const email = document.getElementById("login-email").value;
-            const password = document.getElementById("login-password").value;
-            if(!email || !password) { showToast("Lütfen tüm alanları doldurun.", "error"); return; }
-            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-            if(error) { showToast("Giriş başarısız. Şifre veya e-posta hatalı.", "error"); } 
-            else { showToast("Giriş yapıldı!", "success"); toggleGenericModal('auth-modal'); }
+        window.handleLogin = async () => {
+            const email = document.getElementById("login-email").value; const password = document.getElementById("login-password").value;
+            if(!email || !password) return showToast("Lütfen tüm alanları doldurun.", "error");
+            const { error } = await _supabase.auth.signInWithPassword({ email, password });
+            if(error) showToast("Giriş başarısız. Şifre veya e-posta hatalı.", "error"); 
+            else { showToast("Başarıyla giriş yapıldı.", "success"); toggleGenericModal('auth-modal'); }
         }
 
-        window.handleRegister = async function() {
-            const fullNameRaw = document.getElementById("reg-fullname").value.trim();
-            const fullName = fullNameRaw.toUpperCase();
-            const email = document.getElementById("reg-email").value.trim(); 
-            const password = document.getElementById("reg-password").value;
+        window.handleRegister = async () => {
+            const fullNameRaw = document.getElementById("reg-fullname").value.trim(); const fullName = fullNameRaw.toUpperCase();
+            const email = document.getElementById("reg-email").value.trim(); const password = document.getElementById("reg-password").value;
             const address = document.getElementById("reg-address").value.trim();
-
-            if(!fullName || !email || !password || !address) { showToast("Lütfen tüm alanları doldurun.", "error"); return; }
-            if(password.length < 6) { showToast("Şifreniz en az 6 karakter olmalıdır.", "error"); return; }
-
-            const { data: existingProfile } = await _supabase.from('profiles').select('full_name').eq('full_name', fullName).maybeSingle();
-            if (existingProfile) { showToast("Bu İsim ve Soyisim ile zaten bir hesap oluşturulmuş!", "error"); return; }
-
-            const { data, error } = await _supabase.auth.signUp({ 
-                email, password, options: { data: { full_name: fullNameRaw, address: address } } 
-            });
-
-            if(error) { showToast("Kayıt Hatası: " + error.message, "error"); } 
-            else { 
-                await _supabase.from('profiles').insert({ full_name: fullName, email: email });
-                showToast("Hesabınız oluşturuldu! Şimdi giriş yapabilirsiniz.", "success");
-                switchAuthMode('login'); 
-            }
-        }
-
-        window.handleForgotPassword = async function() {
-            const email = document.getElementById("forgot-email").value.trim();
-            if(!email) { showToast("Lütfen e-posta adresinizi girin.", "error"); return; }
-            const { error } = await _supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/index.html' });
-            if(error) { showToast("Hata: " + error.message, "error"); } 
-            else { showToast("Şifre sıfırlama bağlantısı e-postanıza gönderildi!", "success"); switchAuthMode('login'); }
-        }
-
-        window.handleLogout = async function() { await _supabase.auth.signOut(); showToast("Oturum kapatıldı.", "info"); toggleGenericModal('user-panel-modal'); setTimeout(()=>window.location.reload(), 1000);}
-
-        window.showToast = function(msg, type="success") { 
-            const c = document.getElementById("toast-container"); 
-            const t = document.createElement("div"); 
-            let icon = type === 'success' ? '✅ ' : '❌ ';
-            if(type==='info') icon = 'ℹ️ ';
-            t.className = `toast ${type}`; t.innerText = icon + msg; c.appendChild(t); setTimeout(() => t.remove(), 4000); 
-        }
-
-        // VERİ ÇEKME & VİTRİN
-        async function fetchStocksFromCloud(isAdmin) {
-            const { data, error } = await _supabase.from('stocks').select('*');
-            if (error) return;
-            globalStocks = data; globalStocks.sort((a, b) => a.id - b.id);
-            if (isAdmin) { updateTablesByStatus(globalStocks, true); calculateBusinessIntelligence(); } 
-            else {
-                const role = localStorage.getItem("erdem_bilisim_locked_role") || "alici";
-                if(role === 'alici') filterProducts(); else updateTablesByStatus(globalStocks, false);
-            }
-        }
-
-        window.filterProducts = function() {
-            const searchInput = document.getElementById("search-input");
-            const sortSelect = document.getElementById("sort-select");
+            if(!fullName || !email || !password || !address) return showToast("Lütfen tüm alanları doldurun.", "error");
+            if(password.length < 6) return showToast("Şifreniz en az 6 karakter olmalıdır.", "error");
             
-            let searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
-            let sortValue = sortSelect ? sortSelect.value : "default";
+            const { data: ext } = await _supabase.from('profiles').select('full_name').eq('full_name', fullName).maybeSingle();
+            if (ext) return showToast("Bu İsim ve Soyisim kullanımda!", "error");
 
-            let filteredStocks = globalStocks.filter(stock => {
-                const currentStatus = (stock.status || "%100").trim();
-                const count = parseInt(stock.stock_count || 0);
-                const title = `${stock.brand_name} ${stock.model} ${stock.capacity_gb}GB`.toLowerCase();
-                return ((currentStatus === "%100" || currentStatus === "Sağlıklı") && count > 0 && title.includes(searchTerm));
+            const { error } = await _supabase.auth.signUp({ email, password, options: { data: { full_name: fullNameRaw, address: address } } });
+            if(error) showToast("Kayıt Hatası: " + error.message, "error"); 
+            else { await _supabase.from('profiles').insert({ full_name: fullName, email: email }); showToast("Hesap oluşturuldu! Giriş yapabilirsiniz.", "success"); switchAuthMode('login'); }
+        }
+
+        window.handleForgotPassword = async () => {
+            const email = document.getElementById("forgot-email").value.trim();
+            if(!email) return showToast("Lütfen e-posta adresinizi girin.", "error");
+            const { error } = await _supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/index.html' });
+            if(error) showToast("Hata: " + error.message, "error"); else { showToast("Sıfırlama bağlantısı gönderildi!", "success"); switchAuthMode('login'); }
+        }
+
+        window.handleLogout = async () => { await _supabase.auth.signOut(); showToast("Oturum kapatıldı.", "info"); setTimeout(()=>window.location.reload(), 800); }
+
+        window.showToast = (msg, type="success") => { 
+            const c = document.getElementById("toast-container"); const t = document.createElement("div"); 
+            t.className = `toast ${type}`; t.innerText = msg; c.appendChild(t); setTimeout(() => t.remove(), 3500); 
+        }
+
+        async function fetchStocksFromCloud(isAdmin) {
+            const { data } = await _supabase.from('stocks').select('*');
+            if (data) { globalStocks = data.sort((a, b) => a.id - b.id); if(!isAdmin) filterProducts(); }
+        }
+
+        window.filterProducts = () => {
+            const term = (document.getElementById("search-input")?.value || "").toLowerCase();
+            const sort = document.getElementById("sort-select")?.value || "default";
+            let filtered = globalStocks.filter(s => {
+                const stat = (s.status || "%100").trim(); const c = parseInt(s.stock_count || 0);
+                return (stat === "%100" || stat === "Sağlıklı") && c > 0 && (`${s.brand_name} ${s.model} ${s.capacity_gb}GB`.toLowerCase().includes(term));
             });
-
-            if (sortValue === "price-asc") { filteredStocks.sort((a, b) => parseFloat(a.sale_price) - parseFloat(b.sale_price)); } 
-            else if (sortValue === "price-desc") { filteredStocks.sort((a, b) => parseFloat(b.sale_price) - parseFloat(a.sale_price)); }
-            renderStorefront(filteredStocks); 
+            if (sort === "price-asc") filtered.sort((a,b) => a.sale_price - b.sale_price);
+            else if (sort === "price-desc") filtered.sort((a,b) => b.sale_price - a.sale_price);
+            renderStorefront(filtered); 
         }
 
         function renderStorefront(stocks) {
-            const grid = document.getElementById("products-grid-container");
-            if(!grid) return; grid.innerHTML = "";
-
+            const grid = document.getElementById("products-grid-container"); if(!grid) return; grid.innerHTML = "";
             stocks.forEach(stock => {
-                let formattedCapacity = parseInt(stock.capacity_gb) >= 1000 ? (parseInt(stock.capacity_gb)/1000 + " TB") : (stock.capacity_gb + " GB");
-                let imageUrl = stock.image_url || "https://images.unsplash.com/photo-1597849016254-4fb9f82d2eb5?auto=format&fit=crop&w=400&q=80";
-
-                const card = document.createElement("div"); card.className = "product-card";
-                card.innerHTML = `
-                    <img src="${imageUrl}" class="product-img" alt="${stock.brand_name} Disk">
-                    <div style="font-size:18px; font-weight:bold;">${stock.brand_name}</div>
-                    <div style="color:var(--text-muted); font-size:14px; margin:5px 0;">${formattedCapacity} • ${stock.model}" Form</div>
-                    <div style="font-size: 12px; color: var(--orange);">Stokta: ${stock.stock_count} Adet</div>
-                    <div class="prod-price">${parseFloat(stock.sale_price).toFixed(2)} TL</div>
-                    <button class="btn-add-cart" onclick="addToCart(${stock.id}, '${stock.brand_name}', '${formattedCapacity}', ${stock.sale_price})"><i class="fas fa-cart-plus"></i> Sepete Ekle</button>
-                `;
-                grid.appendChild(card);
+                let cap = parseInt(stock.capacity_gb) >= 1000 ? (parseInt(stock.capacity_gb)/1000 + " TB") : (stock.capacity_gb + " GB");
+                let img = stock.image_url || "https://images.unsplash.com/photo-1597849016254-4fb9f82d2eb5?auto=format&fit=crop&w=400&q=80";
+                grid.innerHTML += `
+                    <div class="product-card">
+                        <img src="${img}" class="product-img" alt="${stock.brand_name}">
+                        <div class="prod-title">${stock.brand_name} ${cap}</div>
+                        <div class="prod-specs">${stock.model}" Form Faktörü</div>
+                        <div style="font-size: 13px; color: var(--primary); font-weight:600;">Stokta: ${stock.stock_count} Adet</div>
+                        <div class="prod-bottom">
+                            <div class="prod-price">${parseFloat(stock.sale_price).toFixed(2)} TL</div>
+                        </div>
+                        <button class="btn-primary w-100" style="margin-top:15px; border-radius:30px;" onclick="addToCart(${stock.id}, '${stock.brand_name}', '${cap}', ${stock.sale_price})">Sepete Ekle</button>
+                    </div>`;
             });
-            if(grid.innerHTML === "") grid.innerHTML = "<p style='color: var(--text-muted); grid-column: 1 / -1; text-align:center;'>Şu an kriterlere uygun ürün bulunmuyor.</p>";
+            if(grid.innerHTML === "") grid.innerHTML = "<p style='color: var(--text-muted); grid-column: 1 / -1; text-align:center; padding: 40px;'>Şu an kriterlere uygun ürün bulunmuyor.</p>";
         }
 
-        // SEPET & PDF
-        window.addToCart = function(id, brand, capacity, price) {
-            const existing = shoppingCart.find(item => item.id === id);
-            if(existing) existing.qty += 1; else shoppingCart.push({ id, brand, capacity, price, qty: 1 });
-            updateCartUI(); showToast(`${brand} ${capacity} sepete eklendi!`, "success");
+        window.addToCart = (id, brand, capacity, price) => {
+            const ext = shoppingCart.find(i => i.id === id);
+            if(ext) ext.qty += 1; else shoppingCart.push({ id, brand, capacity, price, qty: 1 });
+            updateCartUI(); showToast("Sepete Eklendi", "success");
         }
 
         function updateCartUI() {
-            const totalItems = shoppingCart.reduce((sum, item) => sum + item.qty, 0);
-            document.getElementById("header-cart-count").innerText = totalItems;
-            const list = document.getElementById("cart-items-list");
-            const totalEl = document.getElementById("cart-total-price");
-
-            list.innerHTML = ""; let grandTotal = 0;
-            if(shoppingCart.length === 0) list.innerHTML = "<p style='color:var(--text-muted);'>Sepetiniz şu an boş.</p>";
+            document.getElementById("header-cart-count").innerText = shoppingCart.reduce((s, i) => s + i.qty, 0);
+            const list = document.getElementById("cart-items-list"); const tot = document.getElementById("cart-total-price");
+            list.innerHTML = ""; let grand = 0;
+            if(shoppingCart.length === 0) list.innerHTML = "<p style='color:var(--text-muted);'>Sepetiniz boş.</p>";
             else {
-                shoppingCart.forEach((item, index) => {
-                    const rowTotal = item.qty * item.price; grandTotal += rowTotal;
-                    list.innerHTML += `<div class="cart-item"><div><strong>${item.brand} ${item.capacity}</strong><br><span style="font-size:12px; color:var(--text-muted);">${item.qty} Adet x ${item.price.toFixed(2)} TL</span></div><div style="text-align:right;"><strong style="color:var(--blue);">${rowTotal.toFixed(2)} TL</strong><br><button onclick="removeFromCart(${index})" style="background:none; border:none; color:var(--red); font-size:12px; margin-top:5px; cursor:pointer;">Kaldır</button></div></div>`;
+                shoppingCart.forEach((item, idx) => {
+                    grand += item.qty * item.price;
+                    list.innerHTML += `<div class="cart-item"><div><strong>${item.brand} ${item.capacity}</strong><br><span style="font-size:13px; color:var(--text-muted);">${item.qty} x ${item.price.toFixed(2)} TL</span></div><div style="text-align:right;"><strong style="font-size:16px;">${(item.qty * item.price).toFixed(2)} TL</strong><br><button onclick="shoppingCart.splice(${idx}, 1); updateCartUI();" style="background:none; border:none; color:var(--red); font-size:13px; margin-top:5px; cursor:pointer;">Sil</button></div></div>`;
                 });
             }
-            totalEl.innerText = `Toplam: ${grandTotal.toFixed(2)} TL`;
+            tot.innerText = `${grand.toFixed(2)} TL`;
         }
 
-        window.removeFromCart = function(index) { shoppingCart.splice(index, 1); updateCartUI(); }
-        
-        window.generateInvoicePDF = function(items, total, address, customerName) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(22); doc.setTextColor(24, 119, 242); doc.text("ERDEM BILISIM", 20, 20);
-            doc.setFontSize(12); doc.setTextColor(100, 100, 100); doc.text("Guvenli E-Ticaret ve Stok Sistemi", 20, 28);
+        window.generateInvoicePDF = (items, total, address, customerName) => {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFontSize(24); doc.setTextColor(0, 128, 96); doc.text("ERHAN ERDEM", 20, 20);
+            doc.setFontSize(11); doc.setTextColor(100, 100, 100); doc.text("E-Ticaret ve Teknoloji Sistemleri", 20, 28);
             doc.text("Tarih: " + new Date().toLocaleDateString('tr-TR'), 150, 20);
-            doc.setDrawColor(200, 200, 200); doc.line(20, 35, 190, 35);
+            doc.setDrawColor(220, 220, 220); doc.line(20, 35, 190, 35);
             doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text("Sayin " + (customerName || "Musterimiz") + ",", 20, 45);
             doc.text("Teslimat Adresi:", 20, 53); doc.setFontSize(10);
-            const splitAddress = doc.splitTextToSize(address || "Magazadan Teslim", 170); doc.text(splitAddress, 20, 60);
-            doc.setFontSize(12); doc.text("Urun Aciklamasi", 20, 85); doc.text("Adet", 130, 85); doc.text("Fiyat", 160, 85);
+            doc.text(doc.splitTextToSize(address || "Magazadan Teslim", 170), 20, 60);
+            doc.setFontSize(12); doc.text("Urun", 20, 85); doc.text("Adet", 130, 85); doc.text("Fiyat", 160, 85);
             doc.line(20, 88, 190, 88);
             let y = 95;
-            items.forEach(item => { doc.text(`${item.brand} ${item.capacity}`, 20, y); doc.text(`${item.qty}`, 130, y); doc.text(`${item.price.toFixed(2)} TL`, 160, y); y += 10; });
-            doc.line(20, y, 190, y); doc.setFontSize(16); doc.setTextColor(49, 162, 76); doc.text(`Genel Toplam: ${total.toFixed(2)} TL`, 120, y + 10);
-            doc.save(`Fatura_ErdemBilisim_${new Date().getTime()}.pdf`);
+            items.forEach(i => { doc.text(`${i.brand} ${i.capacity}`, 20, y); doc.text(`${i.qty}`, 130, y); doc.text(`${i.price.toFixed(2)} TL`, 160, y); y += 10; });
+            doc.line(20, y, 190, y); doc.setFontSize(16); doc.setTextColor(0, 128, 96); doc.text(`Toplam: ${total.toFixed(2)} TL`, 130, y + 10);
+            doc.save(`Fatura_ErhanErdem_${new Date().getTime()}.pdf`);
         }
 
-        window.checkout = async function() {
-            if(shoppingCart.length === 0) { showToast("Sepetiniz boş!", "error"); return; }
-            if(!currentUser) { showToast("Siparişi tamamlamak için giriş yapmalısınız.", "error"); toggleGenericModal('cart-modal'); toggleGenericModal('auth-modal'); return; }
-
-            const total = shoppingCart.reduce((sum, i) => sum + (i.qty * i.price), 0);
-            const address = currentUser.user_metadata.address || "Profilde adres yok";
+        window.checkout = async () => {
+            if(shoppingCart.length === 0) return showToast("Sepetiniz boş!", "error");
+            if(!currentUser) { showToast("Lütfen giriş yapın."); toggleGenericModal('cart-modal'); toggleGenericModal('auth-modal'); return; }
+            
+            const total = shoppingCart.reduce((s, i) => s + (i.qty * i.price), 0);
+            const address = currentUser.user_metadata.address || "Adres yok";
             const fullName = currentUser.user_metadata.full_name || currentUser.email;
 
             const { error } = await _supabase.from('orders').insert({ user_id: currentUser.id, items: shoppingCart, total_price: total });
-
             if(!error) {
                 generateInvoicePDF(shoppingCart, total, address, fullName);
-                for (let item of shoppingCart) {
-                    const stockItem = globalStocks.find(s => s.id === item.id);
-                    if (stockItem) await _supabase.from('stocks').update({ stock_count: Math.max(0, stockItem.stock_count - item.qty) }).eq('id', item.id);
+                for (let i of shoppingCart) {
+                    const st = globalStocks.find(s => s.id === i.id);
+                    if (st) await _supabase.from('stocks').update({ stock_count: Math.max(0, st.stock_count - i.qty) }).eq('id', i.id);
                 }
-                await sendSystemNotification("admin@erdem.com", `📦 Yeni Sipariş! ${fullName} ${total.toFixed(2)} TL tutarında alışveriş yaptı.`);
-                showToast("Sipariş onaylandı! Faturanız cihazınıza indiriliyor.", "success");
+                await sendSystemNotification("admin@erdem.com", `Yeni Sipariş! ${fullName}, ${total.toFixed(2)} TL ödeme yaptı.`);
+                showToast("Sipariş alındı! Faturanız indiriliyor.", "success");
                 shoppingCart = []; updateCartUI(); toggleGenericModal('cart-modal');
-            } else { showToast("Hata oluştu: " + error.message, "error"); }
+            } else showToast("Hata: " + error.message, "error");
         }
 
         async function fetchUserOrders() {
             const { data } = await _supabase.from('orders').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
             const list = document.getElementById("user-orders-list");
-            if(data && data.length > 0) {
-                list.innerHTML = data.map(o => `<div style="border-bottom:1px dashed var(--border-color); padding:8px 0;"><span style="color:var(--blue); font-weight:bold;">Sipariş #${o.id}</span> - ${parseFloat(o.total_price).toFixed(2)} TL<br><span style="font-size:11px; color:var(--orange);">Durum: Onaylandı, Kargolanacak</span></div>`).join('');
-            } else list.innerHTML = "<span style='color:var(--text-muted);'>Siparişiniz bulunmuyor.</span>";
+            if(data && data.length > 0) list.innerHTML = data.map(o => `<div style="border-bottom:1px solid var(--border-color); padding:10px 0;"><span style="color:var(--text-main); font-weight:700;">Sipariş #${o.id}</span> - ${parseFloat(o.total_price).toFixed(2)} TL<br><span style="font-size:12px; color:var(--primary); font-weight:600;">Durum: Hazırlanıyor</span></div>`).join('');
+            else list.innerHTML = "<span style='color:var(--text-muted);'>Henüz siparişiniz bulunmuyor.</span>";
         }
-
-        // YÖNETİCİ - SATICI ARKA PLAN FONKSİYONLARI (Hata vermemesi için dahil edildi)
-        function parseOfferNotes(rawNotes) {
-            let buyer = "Yok", seller = "Yok";
-            if (rawNotes && rawNotes !== "Teklif Yok") { rawNotes.split("||").forEach(part => { if (part.trim().startsWith("ALICI:")) buyer = part.replace("ALICI:", "").trim(); else if (part.trim().startsWith("SATICI:")) seller = part.replace("SATICI:", "").trim(); }); }
-            return { buyer, seller };
-        }
-        function updateTableHeadersDirect(isAdmin) { /* Admin Tablo Başlıkları */ }
-        function updateTablesByStatus(stocks, isAdmin) { /* Admin Tablo Doldurma İşlemleri */ }
-        window.approveOfferAdmin = async function(id, sellerNote) { }
-        window.acceptAdminOffer = async function(id) { }
-        window.submitNewOfferFromSeller = async function(event) { }
-        window.submitDirectPrice = async function(id, type) { }
-        window.addNewStock = async function(event) { }
-        window.deleteStockFromCloud = async function(id) { }
-        window.barcodeSaleStockDrop = async function(event) { }
-        function renderReportTabs() { }
-        window.clearSalesLogs = function() { }
-        window.calculateBusinessIntelligence = function() { }
     </script>
 </body>
 </html>
