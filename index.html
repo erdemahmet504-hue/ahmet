@@ -13,9 +13,9 @@
             --bg-card: #ffffff;
             --text-main: #202223;
             --text-muted: #6d7175;
-            --primary: #2b3a4a; /* Koyu lacivert/siyah */
+            --primary: #2b3a4a;
             --primary-hover: #1a232c;
-            --accent: #ffb703; /* Sarı vurgu rengi */
+            --accent: #ffb703;
             --accent-hover: #fb8500;
             --border-color: #e1e3e5;
             --orange: #ffc453;
@@ -38,7 +38,6 @@
         body { background-color: var(--bg-main); color: var(--text-main); transition: background 0.3s, color 0.3s; line-height: 1.6; }
         a { text-decoration: none; color: inherit; }
 
-        /* YENİ: Top Bar (Referans Görseldeki Gibi) */
         .top-bar { background-color: #1a1a1a; color: #fff; padding: 8px 5%; display: flex; justify-content: space-between; font-size: 13px; align-items: center; }
         .top-bar .info span { margin-right: 20px; }
         .top-bar .info i { color: var(--accent); margin-right: 5px; }
@@ -68,7 +67,6 @@
         .section-title { text-align: center; margin-bottom: 40px; }
         .section-title h2 { font-size: 32px; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; color: var(--primary); }
         
-        /* YENİ: Hero Section (Görselli ve Modern) */
         .hero-section { 
             background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1920&q=80');
             background-size: cover;
@@ -106,7 +104,6 @@
         .toast.success { background-color: var(--green); } .toast.error { background-color: var(--red); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Sanal POS Kredi Kartı Görünümü */
         .credit-card-box { background: linear-gradient(135deg, #2b3a4a, #1a232c); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2);}
         .credit-card-box::after { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%; }
         .card-chip { width: 40px; height: 30px; background: gold; border-radius: 4px; margin-bottom: 15px; }
@@ -115,7 +112,6 @@
 </head>
 <body>
 
-    <!-- YENİ: İletişim Top Bar -->
     <div class="top-bar">
         <div class="info">
             <span><i class="fas fa-phone"></i> 0(212) 000 00 00</span>
@@ -155,7 +151,6 @@
         <label style="cursor: pointer;"><input type="radio" name="user-role-radio" value="satici" onchange="handleRoleChange()"> 📦 Ürün Tedarik Edeceğim</label>
     </div>
 
-    <!-- MÜŞTERİ VİTRİNİ -->
     <div id="storefront-panel" style="display:none;">
         <section id="home" class="hero-section">
             <div class="hero-content">
@@ -182,7 +177,6 @@
         </section>
     </div>
 
-    <!-- SATICI PANELİ -->
     <div id="customer-seller-panel" style="display:none; padding: 40px 5%;">
         <div class="admin-card">
             <h2 style="margin-bottom:20px; color:var(--primary);">Yeni Ürün Arz Et</h2>
@@ -202,13 +196,11 @@
         </div>
     </div>
 
-    <!-- YÖNETİCİ PANELİ -->
     <div id="admin-panel" style="display:none; padding: 40px 5%;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 30px; align-items: center;">
             <h1 style="font-size:28px; font-weight:800;">Yönetim Paneli</h1>
             <span class="status-badge" style="background-color: var(--accent); color: black; padding: 8px 15px;">Admin Aktif</span>
         </div>
-        <!-- (Diğer Admin Alanları - Aynı Bırakıldı) -->
         <div class="admin-card">
             <h3 style="margin-bottom: 20px;">Yeni Stok Ekle</h3>
             <form id="add-stock-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -230,7 +222,6 @@
         </div>
     </div>
 
-    <!-- ORTAK STOK TABLOLARI -->
     <div id="stock-tables-section" style="display:none; padding: 0 5% 60px 5%;">
         <div class="admin-card" id="container-healthy">
             <h3 style="margin-bottom:15px; color:var(--green);">Sağlıklı Stoklar (%100)</h3>
@@ -238,21 +229,20 @@
         </div>
     </div>
 
-    <!-- MODALLAR -->
-    <!-- GİRİŞ MODALI -->
+    <!-- GİRİŞ MODALI (GÜNCELLENDİ) -->
     <div id="auth-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <span class="close-btn" onclick="toggleGenericModal('auth-modal')">&times;</span>
             <h2 id="auth-title" style="margin-bottom:20px;">Giriş Yap</h2>
             
             <div id="login-form">
-                <input type="email" id="login-email" placeholder="E-Posta Adresi (örn: erdem.bilisim@hotmail.com)" class="form-input">
+                <input type="email" id="login-email" placeholder="E-Posta Adresiniz" class="form-input">
                 <input type="password" id="login-password" placeholder="Şifre" class="form-input">
-                <!-- BENİ HATIRLA EKLENDİ -->
+                
                 <label style="display: block; margin-bottom: 15px; font-size: 13px; color: var(--text-muted); cursor: pointer;">
                     <input type="checkbox" id="remember-me" checked> Beni Hatırla
                 </label>
-                <button onclick="handleLogin()" class="btn-primary w-100">Giriş Yap</button>
+                <button onclick="handleLogin()" class="btn-primary w-100">GİRİŞ YAP</button>
                 <button class="btn-secondary w-100" style="margin-top:10px;" onclick="switchAuthMode('register')">Yeni Hesap Oluştur</button>
             </div>
 
@@ -278,7 +268,7 @@
         </div>
     </div>
 
-    <!-- SANAL POS MODALI (YENİ) -->
+    <!-- SANAL POS MODALI -->
     <div id="pos-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content" style="max-width: 400px;">
             <span class="close-btn" onclick="toggleGenericModal('pos-modal')">&times;</span>
@@ -351,7 +341,7 @@
             let isAdmin = false;
             if (session) { 
                 currentUser = session.user; 
-                // ADMIN KONTROLÜ BURADA:
+                // Admin kontrolü senin e-posta adresine güncellendi
                 isAdmin = (currentUser.email === 'erdem.bilisim@hotmail.com'); 
             }
             
@@ -374,27 +364,34 @@
             document.getElementById("auth-title").innerText = mode === 'login' ? "Giriş Yap" : "Hesap Oluştur";
         }
 
+        // GİRİŞ FONKSİYONU GÜNCELLENDİ (ALERT EKLENDİ)
         window.handleLogin = async () => {
-            const email = document.getElementById("login-email").value; 
+            const email = document.getElementById("login-email").value.trim(); 
             const password = document.getElementById("login-password").value;
             const rememberMe = document.getElementById("remember-me").checked;
 
-            if(!email || !password) return showToast("Alanları doldurun.", "error");
+            if(!email || !password) {
+                alert("Lütfen e-posta adresinizi ve şifrenizi eksiksiz girin.");
+                return;
+            }
+
             try {
                 const { error } = await _supabase.auth.signInWithPassword({ email, password });
                 if(error) {
-                    showToast("Giriş başarısız.", "error"); 
+                    alert("Giriş başarısız: E-posta veya şifre hatalı."); 
+                    console.error(error);
                 } else { 
-                    // Beni Hatırla Mantığı (Local Storage Kaydı)
                     if (rememberMe) {
                         localStorage.setItem("erdem_remembered_email", email);
                     } else {
                         localStorage.removeItem("erdem_remembered_email");
                     }
-                    showToast("Giriş yapıldı.", "success"); 
+                    showToast("Giriş yapıldı, yönlendiriliyorsunuz...", "success"); 
                     setTimeout(() => window.location.reload(), 1000); 
                 }
-            } catch(err) { showToast("Sistem hatası.", "error"); }
+            } catch(err) { 
+                alert("Sunucu ile iletişim kurulamadı."); 
+            }
         }
 
         window.handleLogout = async () => { await _supabase.auth.signOut(); showToast("Çıkış yapıldı.", "info"); setTimeout(()=>window.location.reload(), 800); }
@@ -427,7 +424,6 @@
             
             filtered.forEach(stock => {
                 let cap = parseInt(stock.capacity_gb) >= 1000 ? (parseInt(stock.capacity_gb)/1000 + " TB") : (stock.capacity_gb + " GB");
-                // Daha şık ürün görseli (Tasarım yükseltmesi)
                 let img = stock.image_url || "https://images.unsplash.com/photo-1597849016254-4fb9f82d2eb5?auto=format&fit=crop&w=400&q=80";
                 
                 grid.innerHTML += `
@@ -463,9 +459,6 @@
             tot.innerText = `Toplam: ${grand.toFixed(2)} TL`;
         }
 
-        // ==========================================
-        // SANAL POS SİMÜLASYONU
-        // ==========================================
         window.initiateCheckout = () => {
             if(shoppingCart.length === 0) return showToast("Sepetiniz boş!", "error");
             if(!currentUser) { showToast("Lütfen önce giriş yapın."); toggleGenericModal('cart-modal'); return toggleGenericModal('auth-modal'); }
@@ -481,7 +474,6 @@
             event.preventDefault();
             const btn = document.getElementById('btn-pay');
             
-            // Kart doğrulama (Basit Frontend)
             const ccNum = document.getElementById('cc-number').value.replace(/\s+/g, '');
             if(ccNum.length < 16) return showToast("Geçersiz Kart Numarası", "error");
 
@@ -489,7 +481,6 @@
             btn.style.opacity = "0.7";
             btn.disabled = true;
 
-            // 2 Saniyelik Sanal POS Gecikmesi
             setTimeout(() => {
                 btn.innerText = "Ödemeyi Tamamla";
                 btn.style.opacity = "1";
@@ -506,7 +497,6 @@
             try {
                 const { error } = await _supabase.from('orders').insert({ user_id: currentUser.id, items: shoppingCart, total_price: total });
                 if(!error) {
-                    // Stoktan düşme (Basit simülasyon)
                     for (let i of shoppingCart) {
                         const st = globalStocks.find(s => s.id === i.id);
                         if (st) await _supabase.from('stocks').update({ stock_count: Math.max(0, parseInt(st.stock_count || 0) - i.qty) }).eq('id', i.id);
