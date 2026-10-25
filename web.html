@@ -1,0 +1,405 @@
+﻿<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erdem Bilişim | Donanım E-Ticaret ve Stok Yönetimi</title>
+    <meta name="description" content="HDD, SSD, NVMe ve sunucu diskleri, RAM, işlemci ve bilgisayar aksesuarları. Erdem Bilişim'de uygun fiyatlı, test edilmiş donanım.">
+    <meta name="theme-color" content="#0b1b2e">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Store",
+          "name": "Erdem Bilişim",
+          "email": "erdem.bilisim@hotmail.com",
+          "telephone": "+90 212 000 00 00",
+          "description": "Donanım e-ticaret ve stok yönetimi: HDD, SSD, NVMe, sunucu diskleri, RAM ve bilgisayar aksesuarları."
+        }
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#catalog">İçeriğe geç</a>
+
+    <div class="topbar">
+        <div class="topbar-inner">
+            <span>📞 0(212) 000 00 00</span>
+            <span class="hide-sm">✉️ erdem.bilisim@hotmail.com</span>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="#top" class="logo" aria-label="Erdem Bilişim ana sayfa">ERDEM <span>BİLİŞİM</span></a>
+
+            <button type="button" class="nav-toggle" id="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Menüyü aç/kapat">
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="site-nav" id="site-nav" aria-label="Ana menü" data-open="false">
+                <a href="#catalog">Ürünler</a>
+                <a href="#supplier-section" data-show="supplier">Teklif Ver</a>
+                <a href="#admin-section" data-show="admin">Yönetim</a>
+                <a href="#about">Hakkımızda</a>
+            </nav>
+
+            <div class="header-actions">
+                <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">Koyu tema</button>
+                <button type="button" class="icon-btn" id="notif-btn" data-show="user" hidden aria-label="Bildirimler">
+                    🔔 <span class="count-badge" id="notif-count" hidden>0</span>
+                </button>
+                <button type="button" class="icon-btn" id="open-cart" aria-label="Sepet">
+                    🛒 <span class="count-badge" id="cart-count" hidden>0</span>
+                </button>
+                <span class="role-badge" id="role-badge" hidden></span>
+                <button type="button" class="btn btn-ghost" id="open-auth" data-show="guest">Giriş</button>
+                <button type="button" class="btn btn-primary" id="open-register" data-show="guest">Kayıt Ol</button>
+                <button type="button" class="btn btn-ghost" id="open-account" data-show="user" hidden>Hesabım</button>
+                <button type="button" class="btn btn-ghost" id="logout-btn" data-show="user" hidden>Çıkış</button>
+            </div>
+        </div>
+        <p class="greeting" data-show="user" hidden>Merhaba, <span id="user-greeting"></span></p>
+    </header>
+
+    <main id="top">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-content">
+                <p class="eyebrow">Yüksek performans ve güvenilir stok</p>
+                <h1 id="hero-title">Depolama ve donanımda <span>güvenilir</span> seçim</h1>
+                <p class="hero-lead">HDD, SSD, NVMe ve sunucu diskleri; RAM, işlemci ve aksesuarlar. Stok ve fiyatlar gerçek zamanlı olarak güncellenir.</p>
+                <div class="hero-cta">
+                    <button type="button" class="btn btn-primary btn-lg" id="hero-shop">Ürünleri incele</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="catalog" id="catalog" aria-labelledby="catalog-title">
+            <div class="section-head">
+                <h2 id="catalog-title">Ürünler</h2>
+                <p class="muted">Yalnızca satışta ve stokta olan ürünler listelenir.</p>
+            </div>
+
+            <form class="filters" role="search" onsubmit="return false">
+                <label class="field grow">
+                    <span class="sr-only">Ürün ara</span>
+                    <input type="search" id="search-input" placeholder="Marka veya model ara…" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span class="sr-only">Marka</span>
+                    <select id="filter-brand"><option value="">Tüm markalar</option></select>
+                </label>
+                <label class="field">
+                    <span class="sr-only">Kapasite</span>
+                    <select id="filter-capacity"><option value="">Tüm kapasiteler</option></select>
+                </label>
+                <label class="field">
+                    <span class="sr-only">İnç / model</span>
+                    <select id="filter-model"><option value="">Tüm inç / model</option></select>
+                </label>
+                <label class="field">
+                    <span class="sr-only">Sıralama</span>
+                    <select id="sort-select">
+                        <option value="newest">En yeniler</option>
+                        <option value="price-asc">Fiyat: artan</option>
+                        <option value="price-desc">Fiyat: azalan</option>
+                    </select>
+                </label>
+                <button type="button" class="btn btn-ghost" id="filter-reset">Filtreleri temizle</button>
+            </form>
+
+            <div class="products-grid" id="products-grid" aria-live="polite"></div>
+
+            <nav class="pager" id="catalog-pager" aria-label="Sayfalama" hidden>
+                <button type="button" class="btn btn-ghost" id="pager-prev">‹ Önceki</button>
+                <span id="pager-info" class="muted"></span>
+                <button type="button" class="btn btn-ghost" id="pager-next">Sonraki ›</button>
+            </nav>
+        </section>
+
+        <!-- Tedarikçi paneli -->
+        <section class="panel-section" id="supplier-section" data-show="supplier" hidden aria-labelledby="supplier-title">
+            <div class="section-head">
+                <h2 id="supplier-title">Tedarikçi Paneli</h2>
+                <p class="muted">Ürün teklifinizi gönderin. Yönetici onayından sonra yayına alınır.</p>
+            </div>
+            <div class="card">
+                <form id="supplier-offer-form" class="grid-form" novalidate>
+                    <label class="field"><span>Marka</span><input id="offer-brand" required maxlength="60"></label>
+                    <label class="field"><span>Model</span><input id="offer-model" required maxlength="60"></label>
+                    <label class="field"><span>Kapasite (GB)</span><input id="offer-capacity" type="number" min="1" step="1" required></label>
+                    <label class="field"><span>Adet</span><input id="offer-qty" type="number" min="1" step="1" required></label>
+                    <label class="field"><span>Disk durumu</span><select id="offer-status"></select></label>
+                    <label class="field"><span>İstenen fiyat (TL)</span><input id="offer-price" type="number" min="0" step="0.01" required></label>
+                    <label class="field span-2"><span>Not</span><input id="offer-note" maxlength="500" placeholder="Opsiyonel"></label>
+                    <p class="form-error span-2" id="offer-error" role="alert" hidden></p>
+                    <div class="span-2"><button type="submit" class="btn btn-primary" id="offer-submit">Teklifi Gönder</button></div>
+                </form>
+            </div>
+            <h3 class="subhead">Tekliflerim</h3>
+            <div id="my-offers"></div>
+        </section>
+
+        <!-- Yönetici paneli -->
+        <section class="panel-section" id="admin-section" data-show="admin" hidden aria-labelledby="admin-title">
+            <div class="section-head">
+                <h2 id="admin-title">Yönetim Paneli</h2>
+                <span class="badge-status status-confirmed">Yönetici</span>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="Yönetim sekmeleri">
+                <button type="button" role="tab" data-admin-tab="stock" aria-selected="true">Stok</button>
+                <button type="button" role="tab" data-admin-tab="offers" aria-selected="false">Teklifler</button>
+                <button type="button" role="tab" data-admin-tab="pos" aria-selected="false">Barkodla Satış</button>
+                <button type="button" role="tab" data-admin-tab="reports" aria-selected="false">Raporlar</button>
+                <button type="button" role="tab" data-admin-tab="orders" aria-selected="false">Siparişler</button>
+                <button type="button" role="tab" data-admin-tab="users" aria-selected="false">Kullanıcılar</button>
+            </div>
+
+            <!-- Stok -->
+            <div data-admin-panel="stock" class="tab-panel">
+                <div class="card">
+                    <h3>Yeni ürün ekle</h3>
+                    <form id="add-stock-form" class="grid-form" novalidate>
+                        <label class="field"><span>Barkod</span><input id="new-barcode" maxlength="64"></label>
+                        <label class="field"><span>Marka</span><input id="new-brand" required maxlength="60"></label>
+                        <label class="field"><span>Model (inç)</span><input id="new-model" required maxlength="60"></label>
+                        <label class="field"><span>Kapasite (GB)</span><input id="new-capacity" type="number" min="1" step="1" required></label>
+                        <label class="field"><span>Adet</span><input id="new-stock" type="number" min="0" step="1" required></label>
+                        <label class="field"><span>Disk durumu</span><select id="new-status"></select></label>
+                        <label class="field"><span>Alış fiyatı (TL)</span><input id="new-price" type="number" min="0" step="0.01" required></label>
+                        <label class="field"><span>Satış fiyatı (TL, KDV dahil)</span><input id="new-sale-price" type="number" min="0" step="0.01" required></label>
+                        <label class="field"><span>Görsel adresi (https)</span><input id="new-image" type="url" maxlength="500"></label>
+                        <label class="field"><span>Minimum stok (uyarı)</span><input id="new-min-stock" type="number" min="0" step="1" value="2"></label>
+                        <label class="check span-2"><input type="checkbox" id="new-published" checked> Vitrinde yayınla</label>
+                        <p class="form-error span-2" id="add-stock-error" role="alert" hidden></p>
+                        <div class="span-2"><button type="submit" class="btn btn-primary" id="add-stock-submit">Stoğa ekle</button></div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="row-between">
+                        <h3>Ürün stoğu</h3>
+                        <button type="button" class="btn btn-ghost btn-small" id="refresh-stock">Yenile</button>
+                    </div>
+                    <p id="critical-stock" class="notice" aria-live="polite"></p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Barkod</th>
+                                    <th>Ürün</th>
+                                    <th>Kapasite</th>
+                                    <th>Stok</th>
+                                    <th>Durum</th>
+                                    <th>Alış</th>
+                                    <th>Satış</th>
+                                    <th>Yayın</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-stock-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teklifler -->
+            <div data-admin-panel="offers" class="tab-panel" hidden>
+                <div class="card">
+                    <h3>Bekleyen tedarikçi teklifleri</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Ürün</th><th>Kapasite</th><th>Adet</th><th>Durum</th><th>İstenen</th><th>Alış (TL)</th><th>Satış (TL)</th><th>İşlem</th></tr></thead>
+                            <tbody id="admin-offers-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barkodla satış -->
+            <div data-admin-panel="pos" class="tab-panel" hidden>
+                <div class="card narrow">
+                    <h3>Barkodla satış</h3>
+                    <p class="muted small">Barkodu okutun; stok atomik olarak düşülür ve satış raporuna kaydedilir.</p>
+                    <form id="pos-form" class="grid-form one-col" novalidate>
+                        <label class="field"><span>Barkod</span><input id="pos-barcode" autocomplete="off" required maxlength="64" autofocus></label>
+                        <label class="field"><span>Satış oturumu</span><input id="pos-session" value="Satış 1" maxlength="60"></label>
+                        <button type="submit" class="btn btn-primary" id="pos-submit">Satışı kaydet</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Raporlar -->
+            <div data-admin-panel="reports" class="tab-panel" hidden>
+                <div class="row-between">
+                    <label class="field inline">
+                        <span>Dönem</span>
+                        <select id="report-range">
+                            <option value="today">Bugün</option>
+                            <option value="7d">Son 7 gün</option>
+                            <option value="30d" selected>Son 30 gün</option>
+                            <option value="all">Tümü</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="kpi-grid" id="kpi-cards"></div>
+                <div class="two-col">
+                    <div class="card">
+                        <h3>Satış oturumları</h3>
+                        <div class="table-wrap">
+                            <table><thead><tr><th>Oturum</th><th>Adet</th><th>Ciro</th></tr></thead><tbody id="session-body"></tbody></table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Kritik stoklar</h3>
+                        <ul class="plain-list" id="critical-list"></ul>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Denetim kayıtları</h3>
+                    <ul class="plain-list audit" id="audit-list"></ul>
+                </div>
+            </div>
+
+            <!-- Siparişler -->
+            <div data-admin-panel="orders" class="tab-panel" hidden>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Sipariş</th><th>Müşteri</th><th>Tutar</th><th>Durum</th><th>Ödeme</th><th>Tarih</th><th>İşlem</th></tr></thead>
+                            <tbody id="admin-orders-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kullanıcılar -->
+            <div data-admin-panel="users" class="tab-panel" hidden>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Ad Soyad</th><th>Telefon</th><th>Adres</th><th>Rol</th><th></th></tr></thead>
+                            <tbody id="admin-users-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="about" id="about" aria-labelledby="about-title">
+            <div class="section-head"><h2 id="about-title">Hakkımızda</h2></div>
+            <p>
+                Erdem Bilişim; depolama ve bilgisayar donanımı konusunda, stok durumu şeffaf biçimde gösterilen bir e-ticaret mağazasıdır.
+                Her ürünün disk sağlık durumu ayrı olarak belirtilir. İletişim: <a href="mailto:erdem.bilisim@hotmail.com">erdem.bilisim@hotmail.com</a>, 0(212) 000 00 00.
+            </p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>© Erdem Bilişim · Ödemeler kapıda ödeme ile alınır. Online kart ödemesi yakında.</p>
+    </footer>
+
+    <!-- ===================== MODALLAR ===================== -->
+
+    <div class="modal-overlay" id="auth-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <div class="modal-content" tabindex="-1">
+            <button type="button" class="close-btn" data-close-modal="auth-modal" aria-label="Kapat">×</button>
+            <h2 id="auth-title">Giriş Yap</h2>
+
+            <form id="login-form" novalidate>
+                <label class="field"><span>E-posta</span><input type="email" id="login-email" autocomplete="email" required></label>
+                <label class="field"><span>Şifre</span><input type="password" id="login-password" autocomplete="current-password" required></label>
+                <label class="check"><input type="checkbox" id="remember-me" checked> Beni hatırla (yalnızca e-posta)</label>
+                <p class="form-error" id="login-error" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primary w-100" id="login-submit">Giriş yap</button>
+                <button type="button" class="btn btn-ghost w-100" id="show-register">Yeni hesap oluştur</button>
+            </form>
+
+            <form id="register-form" novalidate hidden>
+                <label class="field"><span>Ad Soyad</span><input id="reg-fullname" autocomplete="name" required maxlength="80"></label>
+                <label class="field"><span>E-posta</span><input type="email" id="reg-email" autocomplete="email" required></label>
+                <label class="field"><span>Şifre (en az 8 karakter, harf ve rakam)</span><input type="password" id="reg-password" autocomplete="new-password" required></label>
+                <label class="field"><span>Telefon (isteğe bağlı)</span><input type="tel" id="reg-phone" autocomplete="tel" placeholder="05xx xxx xx xx"></label>
+                <label class="field"><span>Teslimat adresi</span><textarea id="reg-address" rows="3" required maxlength="500"></textarea></label>
+                <p class="form-error" id="register-error" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primary w-100" id="register-submit">Hesap oluştur</button>
+                <button type="button" class="btn btn-ghost w-100" id="show-login">Giriş yap</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="cart-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+        <div class="modal-content wide" tabindex="-1">
+            <button type="button" class="close-btn" data-close-modal="cart-modal" aria-label="Kapat">×</button>
+            <h2 id="cart-title">Sepetiniz</h2>
+            <ul class="cart-list" id="cart-items" aria-live="polite"></ul>
+            <div class="cart-total" id="cart-total"></div>
+            <button type="button" class="btn btn-primary w-100" id="cart-checkout" disabled>Siparişi tamamla</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="checkout-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+        <div class="modal-content" tabindex="-1">
+            <button type="button" class="close-btn" data-close-modal="checkout-modal" aria-label="Kapat">×</button>
+            <h2 id="checkout-title">Sipariş onayı</h2>
+            <ul class="plain-list" id="checkout-summary"></ul>
+            <p class="checkout-total">Toplam: <strong id="checkout-total"></strong></p>
+
+            <form id="checkout-form" novalidate>
+                <label class="field"><span>Ad Soyad (faturada görünür)</span><input id="checkout-name" required maxlength="120"></label>
+                <label class="field"><span>Teslimat adresi</span><textarea id="checkout-address" rows="3" required maxlength="500"></textarea></label>
+
+                <fieldset class="payment">
+                    <legend>Ödeme yöntemi</legend>
+                    <label class="check"><input type="radio" name="payment-method" value="cod" checked> Kapıda ödeme</label>
+                    <label class="check"><input type="radio" name="payment-method" value="card"> Kredi kartı (yakında)</label>
+                    <p class="muted small" id="card-hint"></p>
+                </fieldset>
+
+                <p class="form-error" id="checkout-error" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primary w-100" id="checkout-submit">Siparişi onayla</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="account-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="account-title">
+        <div class="modal-content wide" tabindex="-1">
+            <button type="button" class="close-btn" data-close-modal="account-modal" aria-label="Kapat">×</button>
+            <h2 id="account-title">Hesabım</h2>
+            <div class="tabs" role="tablist" aria-label="Hesap sekmeleri">
+                <button type="button" role="tab" data-account-tab="orders" aria-selected="true">Siparişlerim</button>
+                <button type="button" role="tab" data-account-tab="profile" aria-selected="false">Profil</button>
+            </div>
+
+            <div data-account-panel="orders" class="tab-panel">
+                <div id="orders-list" class="orders-list"></div>
+            </div>
+
+            <div data-account-panel="profile" class="tab-panel" hidden>
+                <form id="profile-form" novalidate class="grid-form one-col">
+                    <label class="field"><span>Ad Soyad</span><input id="profile-name" disabled></label>
+                    <label class="field"><span>Telefon</span><input id="profile-phone" type="tel" autocomplete="tel" placeholder="05xx xxx xx xx"></label>
+                    <label class="field"><span>Teslimat adresi</span><textarea id="profile-address" rows="3" maxlength="500"></textarea></label>
+                    <p class="form-error" id="profile-error" role="alert" hidden></p>
+                    <button type="submit" class="btn btn-primary" id="profile-submit">Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="notif-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="notif-title">
+        <div class="modal-content" tabindex="-1">
+            <button type="button" class="close-btn" data-close-modal="notif-modal" aria-label="Kapat">×</button>
+            <h2 id="notif-title">Bildirimler</h2>
+            <ul class="plain-list notif-list" id="notif-list"></ul>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
